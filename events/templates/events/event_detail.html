@@ -3,12 +3,13 @@
 {% block content %}
 <h2>{{ event.title }}</h2>
 <p>{{ event.description }}</p>
+<p>{{ event.start_date|date:"M d, Y H:i" }} - {{ event.end_date|date:"M d, Y H:i" }}</p>
 
 <h3>Gallery</h3>
 <ul>
   {% for image in images %}
     <li>
-      <img src="{{ image.image.url }}" width="200">
+      <img src="{{ image.image.url }}" width="200" alt="Event image">
     </li>
   {% empty %}
     <li>No images uploaded</li>
@@ -16,10 +17,31 @@
 </ul>
 
 {% if user.is_authenticated %}
-<form method="post" enctype="multipart/form-data" action="{% url 'events:event_detail' event.pk %}">
-  {% csrf_token %}
-  {{ image_form.as_p }}
-  <button type="submit">Upload Image</button>
-</form>
+  <!-- Image upload form -->
+  <form method="post" enctype="multipart/form-data" action="{% url 'events:upload_event_image' event.pk %}">
+    {% csrf_token %}
+    {{ image_form.as_p }}
+    <button type="submit">Upload Image</button>
+  </form>
 {% endif %}
+
+{% if request.user.is_staff %}
+    <a href="{% url 'events:event_delete' event.pk %}">Delete Event</a>
+{% endif %}
+
+{% for image in images %}
+    <div class="event-image">
+        <img src="{{ image.image.url }}" alt="Event image" width="200">
+        {% if request.user.is_staff %}
+            <form method="post" action="{% url 'events:event_image_delete' image.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Delete</button>
+            </form>
+        {% endif %}
+    </div>
+{% endfor %}
+
+<!-- Navigation links -->
+<a href="{% url 'events:event_list' %}">Back to Events</a>
+<a href="{% url 'events:event_create' %}">Create New Event</a>
 {% endblock %}

@@ -1,7 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.utils.timezone import now
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.utils.timezone import now
 
 from .models import Event, EventImage
 from .forms import EventForm, EventImageForm
@@ -48,16 +47,31 @@ def is_event_creator(user):
 def event_create(request):
     if request.method == "POST":
         form = EventForm(request.POST)
+        files = request.FILES.getlist("images")  # handle multiple files
         if form.is_valid():
             event = form.save(commit=False)
             event.created_by = request.user
             event.save()
+            # Save uploaded images with uploaded_by
+            for f in files:
+                EventImage.objects.create(
+                    event=event,
+                    image=f,
+                    uploaded_by=request.user  # <-- fixed
+                )
             return redirect("events:event_list")
         print("Form errors:", form.errors)
     else:
         form = EventForm()
-
     return render(request, "events/event_form.html", {"form": form})
+
+def event_delete(request, pk):
+    event = get_object_or_404(Event, pk=pk)
+    if request.method == "POST":
+        event.delete()
+        return redirect("events:event_list")
+    return render(request, "events/event_confirm_delete.html", {"event": event})
+
 
 @login_required
 def upload_event_image(request, pk):
@@ -72,3 +86,13 @@ def upload_event_image(request, pk):
             image.save()
 
     return redirect("events:event_detail", pk=pk)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)  # only admins
+def event_image_delete(request, pk):
+    image = get_object_or_404(EventImage, pk=pk)
+    event_pk = image.event.pk
+    if request.method == "POST":
+        image.delete()
+    return redirect("events:event_detail", pk=event_pk)

@@ -2,9 +2,14 @@
 
 {% block content %}
 <h2>Create Event</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Save</button>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <!-- Image upload -->
+    <label>Upload Images</label>
+    <input type="file" name="images" multiple>
+
+    <button type="submit">Save</button>
 </form>
 {% endblock %}
