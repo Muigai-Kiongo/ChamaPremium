@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ event.title }}</h2>
+<p>{{ event.description }}</p>
+
+<h3>Gallery</h3>
+<ul>
+  {% for image in images %}
+    <li>
+      <img src="{{ image.image.url }}" width="200">
+    </li>
+  {% empty %}
+    <li>No images uploaded</li>
+  {% endfor %}
+</ul>
+
+{% if user.is_authenticated %}
+<form method="post" enctype="multipart/form-data" action="{% url 'events:event_detail' event.pk %}">
+  {% csrf_token %}
+  {{ image_form.as_p }}
+  <button type="submit">Upload Image</button>
+</form>
+{% endif %}
+{% endblock %}

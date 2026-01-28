@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Upcoming Events</h2>
+<ul>
+  {% for event in upcoming_events %}
+    <li>
+      <a href="{% url 'events:event_detail' event.pk %}">
+        {{ event.title }} – {{ event.start_date }}
+      </a>
+    </li>
+  {% empty %}
+    <li>No upcoming events</li>
+  {% endfor %}
+</ul>
+
+<h2>Past Events</h2>
+<ul>
+  {% for event in past_events %}
+    <li>{{ event.title }} – {{ event.end_date }}</li>
+  {% empty %}
+    <li>No past events</li>
+  {% endfor %}
+</ul>
+{% endblock %}
