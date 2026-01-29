@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white py-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-1">{{ webinar.title }}</h3>
+                        <p class="mb-0 opacity-75">
+                            <i class="fas fa-calendar me-2"></i>
+                            {{ webinar.scheduled_at|date:"l, F j, Y - g:i A" }}
+                        </p>
+                    </div>
+                    <span class="badge bg-{% if webinar.status == 'live' %}success{% elif webinar.status == 'scheduled' %}warning{% else %}secondary{% endif %} fs-5">
+                        {{ webinar.status|title }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="card-body p-4">
+                <!-- Description -->
+                <div class="mb-4">
+                    <h5><i class="fas fa-info-circle text-primary me-2"></i>About This Webinar</h5>
+                    <p class="lead">{{ webinar.description|linebreaks }}</p>
+                </div>
+
+                <!-- Details -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 text-center">
+                            <i class="fas fa-clock fa-2x text-primary mb-2"></i>
+                            <h6>Duration</h6>
+                            <p class="mb-0">{{ webinar.duration_minutes }} minutes</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 text-center">
+                            <i class="fas fa-users fa-2x text-success mb-2"></i>
+                            <h6>Attendees</h6>
+                            <p class="mb-0">{{ current_attendees }} / {{ webinar.max_attendees|default:"Unlimited" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 text-center">
+                            <i class="fas fa-user-tie fa-2x text-info mb-2"></i>
+                            <h6>Host</h6>
+                            <p class="mb-0">{{ webinar.created_by.username }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Join Button -->
+                {% if webinar.status == 'live' %}
+                <div class="alert alert-success">
+                    <i class="fas fa-circle text-danger blink me-2"></i>
+                    <strong>LIVE NOW!</strong> Join the webinar
+                </div>
+                <button class="btn btn-success btn-lg w-100 py-3" id="joinWebinarBtn" data-webinar-id="{{ webinar.id }}">
+                    <i class="fas fa-video me-2"></i>Join Google Meet
+                </button>
+                {% elif webinar.status == 'scheduled' %}
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-hourglass-half me-2"></i>
+                    Webinar starts in: <strong id="countdown"></strong>
+                </div>
+                <button class="btn btn-secondary btn-lg w-100" disabled>
+                    <i class="fas fa-clock me-2"></i>Not Started Yet
+                </button>
+                {% else %}
+                <div class="alert alert-secondary text-center">
+                    <i class="fas fa-check-circle me-2"></i>
+                    This webinar has {{ webinar.status }}
+                </div>
+                {% endif %}
+
+                <!-- Google Meet Link (Admin only) -->
+                {% if membership.role == 'admin' and webinar.google_meet_link %}
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="text-muted">Admin Panel</h6>
+                    <p class="mb-2"><strong>Meet Link:</strong></p>
+                    <div class="input-group">
+                        <input type="text" class="form-control" value="{{ webinar.google_meet_link }}" readonly>
+                        <button class="btn btn-outline-primary" onclick="navigator.clipboard.writeText('{{ webinar.google_meet_link }}')">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <a href="/admin/channels_app/webinar/{{ webinar.id }}/change/" class="btn btn-sm btn-outline-secondary mt-2">
+                        <i class="fas fa-edit"></i> Edit Webinar
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-users me-2"></i>Recent Attendees</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for attendance in webinar.attendance.all|slice:":10" %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fas fa-user-circle text-primary me-2"></i>
+                            {{ attendance.member.user.username }}
+                        </span>
+                        {% if attendance.is_present %}
+                        <span class="badge bg-success">Online</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Left</span>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-center text-muted">
+                        No attendees yet
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-body">
+                <h6><i class="fas fa-arrow-left me-2"></i>Navigation</h6>
+                <a href="{% url 'channels_app:webinar_list' webinar.channel.slug %}" class="btn btn-outline-primary w-100 mb-2">
+                    All Webinars
+                </a>
+                <a href="{% url 'channels_app:channel_detail' webinar.channel.slug %}" class="btn btn-outline-secondary w-100">
+                    Channel Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Join Webinar
+document.getElementById('joinWebinarBtn')?.addEventListener('click', function() {
+    const webinarId = this.dataset.webinarId;
+    const channelSlug = '{{ webinar.channel.slug }}';
+    
+    fetch(`/channel/${channelSlug}/webinars/${webinarId}/join/`, {
+        method: 'GET',
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success) {
+            window.open(data.meet_link, '_blank');
+            alert('Joined! Opening Google Meet...');
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+});
+
+// Countdown Timer
+{% if webinar.status == 'scheduled' %}
+const scheduledTime = new Date("{{ webinar.scheduled_at|date:'c' }}").getTime();
+setInterval(() => {
+    const now = new Date().getTime();
+    const distance = scheduledTime - now;
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    document.getElementById('countdown').innerHTML = `${days}d ${hours}h ${minutes}m`;
+}, 1000);
+{% endif %}
+</script>
+
+<style>
+@keyframes blink { 50% { opacity: 0; } }
+.blink { animation: blink 1s linear infinite; }
+</style>
+{% endblock %}
