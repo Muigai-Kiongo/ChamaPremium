@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Loan Calculator{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Loan Calculator</h3>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if calculation_result %}
+                        <div class="alert alert-success mb-4">
+                            <h5>Calculation Results</h5>
+                            <hr>
+                            <p><strong>Principal:</strong> KES {{ calculation_result.principal|floatformat:2 }}</p>
+                            <p><strong>Interest Rate:</strong> {{ calculation_result.interest_rate }}%</p>
+                            <p><strong>Period:</strong> {{ calculation_result.repayment_period }} months</p>
+                            <hr>
+                            <p><strong>Monthly Payment:</strong> <span class="text-primary">KES {{ calculation_result.monthly_payment|floatformat:2 }}</span></p>
+                            <p><strong>Total Payable:</strong> <span class="text-danger">KES {{ calculation_result.total_payable|floatformat:2 }}</span></p>
+                            <p><strong>Total Interest:</strong> <span class="text-warning">KES {{ calculation_result.total_interest|floatformat:2 }}</span></p>
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.principal.label }}</label>
+                            {{ form.principal }}
+                            {% if form.principal.errors %}
+                                <div class="text-danger">{{ form.principal.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.interest_rate.label }}</label>
+                            {{ form.interest_rate }}
+                            {% if form.interest_rate.errors %}
+                                <div class="text-danger">{{ form.interest_rate.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.repayment_period.label }}</label>
+                            {{ form.repayment_period }}
+                            {% if form.repayment_period.errors %}
+                                <div class="text-danger">{{ form.repayment_period.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg w-100">Calculate</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

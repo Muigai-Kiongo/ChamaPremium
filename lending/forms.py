@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from .models import (
-    MemberProfile, LoanProduct, LoanApplication, Guarantor, 
+    MemberProfile, LoanProduct, LoanApplication, 
     Loan, LoanRepayment, TableBankingLoan, TableBankingRound, Contribution
 )
 from decimal import Decimal
@@ -90,97 +90,6 @@ class LoanApplicationForm(forms.ModelForm):
         
         return cleaned_data
 
-
-class GuarantorSelectionForm(forms.Form):
-    """Form for selecting guarantors for loan application"""
-    guarantor_1 = forms.ModelChoiceField(
-        queryset=User.objects.none(),
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='Guarantor 1',
-        empty_label='-- Select Guarantor --'
-    )
-    amount_1 = forms.DecimalField(
-        required=False,
-        max_digits=12,
-        decimal_places=2,
-        min_value=1,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Amount to guarantee',
-            'step': '0.01'
-        }),
-        label='Amount Guaranteed by Guarantor 1'
-    )
-    
-    guarantor_2 = forms.ModelChoiceField(
-        queryset=User.objects.none(),
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='Guarantor 2',
-        empty_label='-- Select Guarantor --'
-    )
-    amount_2 = forms.DecimalField(
-        required=False,
-        max_digits=12,
-        decimal_places=2,
-        min_value=1,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Amount to guarantee',
-            'step': '0.01'
-        }),
-        label='Amount Guaranteed by Guarantor 2'
-    )
-    
-    guarantor_3 = forms.ModelChoiceField(
-        queryset=User.objects.none(),
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='Guarantor 3',
-        empty_label='-- Select Guarantor --'
-    )
-    amount_3 = forms.DecimalField(
-        required=False,
-        max_digits=12,
-        decimal_places=2,
-        min_value=1,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Amount to guarantee',
-            'step': '0.01'
-        }),
-        label='Amount Guaranteed by Guarantor 3'
-    )
-
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
-        self.guarantors_required = kwargs.pop('guarantors_required', 0)
-        super().__init__(*args, **kwargs)
-        
-        # Exclude current user from guarantor choices
-        if self.user:
-            eligible_guarantors = User.objects.filter(
-                member_profile__is_qualified=True
-            ).exclude(id=self.user.id)
-            
-            self.fields['guarantor_1'].queryset = eligible_guarantors
-            self.fields['guarantor_2'].queryset = eligible_guarantors
-            self.fields['guarantor_3'].queryset = eligible_guarantors
-
-
-class GuarantorResponseForm(forms.ModelForm):
-    """Form for guarantors to accept/decline guarantee requests"""
-    
-    class Meta:
-        model = Guarantor
-        fields = ['status']
-        widgets = {
-            'status': forms.RadioSelect(choices=[
-                ('accepted', 'Accept'),
-                ('declined', 'Decline')
-            ])
-        }
 
 
 class LoanPaymentForm(forms.Form):

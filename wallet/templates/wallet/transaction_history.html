@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Transaction History{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0">Transaction History</h3>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="alert alert-light border mb-4">
+                        <h5>Current Balance</h5>
+                        <h3 class="text-success">KES {{ wallet.balance|floatformat:2 }}</h3>
+                    </div>
+
+                    <form method="get" class="mb-4">
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">{{ form.transaction_type.label }}</label>
+                                {{ form.transaction_type }}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">{{ form.status.label }}</label>
+                                {{ form.status }}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">{{ form.date_from.label }}</label>
+                                {{ form.date_from }}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">{{ form.date_to.label }}</label>
+                                {{ form.date_to }}
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-info text-white">Filter</button>
+                    </form>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr>
+                                    <td>{{ transaction.created_at|date:"Y-m-d H:i" }}</td>
+                                    <td>
+                                        {% if transaction.type == 'deposit' %}
+                                            <span class="badge bg-success">Deposit</span>
+                                        {% elif transaction.type == 'withdrawal' %}
+                                            <span class="badge bg-danger">Withdrawal</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Chama Payment</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>KES {{ transaction.amount|floatformat:2 }}</td>
+                                    <td>{{ transaction.description|default:"-" }}</td>
+                                    <td>
+                                        {% if transaction.status == 'completed' %}
+                                            <span class="badge bg-success">Completed</span>
+                                        {% elif transaction.status == 'pending' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Failed</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No transactions found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

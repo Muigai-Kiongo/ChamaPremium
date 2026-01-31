@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Wallet{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">My Wallet</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <h5 class="text-muted mb-3">Current Balance</h5>
+                        <h1 class="display-1 text-success fw-bold">KES {{ wallet.balance|floatformat:2 }}</h1>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <a href="{% url 'wallet:deposit' %}" class="btn btn-primary w-100 btn-lg">Deposit</a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="{% url 'wallet:withdraw' %}" class="btn btn-danger w-100 btn-lg">Withdraw</a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="{% url 'wallet:send_money' %}" class="btn btn-success w-100 btn-lg">Send Money</a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="{% url 'wallet:pay_chama' %}" class="btn btn-warning w-100 btn-lg">Pay Chama</a>
+                        </div>
+                        <div class="col-md-12">
+                            <a href="{% url 'wallet:transaction_history' %}" class="btn btn-info w-100 btn-lg text-white">Transaction History</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

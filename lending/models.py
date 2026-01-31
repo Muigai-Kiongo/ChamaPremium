@@ -25,7 +25,6 @@ class LoanProduct(models.Model):
     max_amount = models.DecimalField(max_digits=12, decimal_places=2)
     interest_rate = models.DecimalField(max_digits=5, decimal_places=2)
     repayment_periods = models.JSONField()
-    guarantors_required = models.IntegerField(default=0)
     min_credit_score = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
     
@@ -63,27 +62,6 @@ class LoanApplication(models.Model):
         verbose_name = "Loan Application"
         verbose_name_plural = "Loan Applications"
         ordering = ['-applied_date']
-
-
-class Guarantor(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('accepted', 'Accepted'),
-        ('declined', 'Declined'),
-    ]
-    
-    loan_application = models.ForeignKey(LoanApplication, on_delete=models.CASCADE, related_name='guarantors')
-    guarantor_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='guarantees')
-    amount_guaranteed = models.DecimalField(max_digits=12, decimal_places=2)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    responded_date = models.DateTimeField(null=True, blank=True)
-    
-    def __str__(self):
-        return f"{self.guarantor_user.username} guarantees {self.amount_guaranteed}"
-    
-    class Meta:
-        verbose_name = "Guarantor"
-        verbose_name_plural = "Guarantors"
 
 
 class Loan(models.Model):

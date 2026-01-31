@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Apply for Table Banking Loan{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h3 class="mb-0">Table Banking Loan</h3>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="alert alert-info mb-4">
+                        <h5>Current Round</h5>
+                        <hr>
+                        <p><strong>Round:</strong> {{ current_round.round_number }}</p>
+                        <p><strong>Date:</strong> {{ current_round.round_date }}</p>
+                        <p><strong>Total Pool:</strong> KES {{ current_round.total_pool|floatformat:2 }}</p>
+                        <p><strong>Already Lent:</strong> KES {{ current_round.amount_lent|floatformat:2 }}</p>
+                        <hr>
+                        <p><strong>Available:</strong> <span class="text-success fw-bold">KES {{ available_amount|floatformat:2 }}</span></p>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.amount_borrowed.label }}</label>
+                            {{ form.amount_borrowed }}
+                            <small class="form-text">Max: KES {{ available_amount|floatformat:2 }}</small>
+                            {% if form.amount_borrowed.errors %}
+                                <div class="text-danger">{{ form.amount_borrowed.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="alert alert-warning">
+                            <p class="mb-0">This loan must be repaid within 30 days.</p>
+                        </div>
+                        <button type="submit" class="btn btn-secondary btn-lg w-100">Submit Application</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
