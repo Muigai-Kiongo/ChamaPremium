@@ -38,13 +38,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
+    'chama_ai.apps.ChamaAiConfig',
+    
     # 3rd party
     'crispy_forms',
     'crispy_bootstrap5',
     
-    # Local
+    # Local apps
+    'users',
     'channels_app',
+    
     
     # Channels must be last
     'channels',

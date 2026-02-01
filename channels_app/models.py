@@ -1,9 +1,12 @@
 from django.db import models
 
+
 # Create your models here.
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 # CHANNEL MODELS
 class Channel(models.Model):

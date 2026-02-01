@@ -135,7 +135,7 @@ def webinar_create(request, channel_slug):
             for member in channel_members:
                 create_notification(
                     recipient=member.user,
-                    title='New Webinar Scheduled 📅',
+                    title='New Webinar Scheduled ',
                     message=f'"{webinar.title}" scheduled for {webinar.scheduled_at.strftime("%b %d, %Y at %I:%M %p")}',
                     notification_type='webinar_created',
                     link=f'/channel/{channel.slug}/webinars/{webinar.id}/'
@@ -277,7 +277,7 @@ def request_create(request, channel_slug):
             for admin in admins:
                 create_notification(
                     recipient=admin.user,
-                    title='New Request Submitted 📝',
+                    title='New Request Submitted ',
                     message=f'{request.user.username} submitted a {new_request.get_type_display()} request: "{new_request.title}"',
                     notification_type='request_created',
                     link=f'/channel/{channel_slug}/requests/{new_request.id}/'
