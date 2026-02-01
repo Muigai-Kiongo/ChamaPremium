@@ -13,7 +13,11 @@ from .models import (
     Loan, LoanRepayment, TableBankingLoan, TableBankingRound, Contribution
 )
 
+def loan_view(request):
+    return render(request, 'lending/loan.html')
 
+def dashboard_view(request):
+    return render(request, 'lending/dashboard.html')
 
 def check_eligibility_view(request):
     if request.method == 'POST':
@@ -113,7 +117,7 @@ def repay_loan_view(request, loan_id):
     
     if loan.status != 'active':
         messages.error(request, 'This loan is not active')
-        return redirect('my_loans')
+        return redirect('lending:my_loans')
     
     if request.method == 'POST':
         form = LoanPaymentForm(request.POST, loan=loan)
@@ -239,7 +243,7 @@ def apply_table_banking_view(request):
         current_round = TableBankingRound.objects.filter(status='open').latest('round_number')
     except TableBankingRound.DoesNotExist:
         messages.error(request, 'No active table banking round')
-        return redirect('table_banking_rounds')
+        return redirect('lending:loan')
     
     if request.method == 'POST':
         form = TableBankingApplicationForm(request.POST, round=current_round)
@@ -360,3 +364,47 @@ def pay_contribution_view(request):
     
     context = {'form': form}
     return render(request, 'lending/pay_contribution.html', context)
+
+
+
+# @login_required
+def my_loans_view(request):
+    """Display all loans for the current user"""
+    
+    # Get all loans for the user
+    active_loans = Loan.objects.filter(
+        borrower=request.user, 
+        status='active'
+    ).order_by('-disbursement_date')
+    
+    completed_loans = Loan.objects.filter(
+        borrower=request.user, 
+        status='completed'
+    ).order_by('-disbursement_date')
+    
+    pending_applications = LoanApplication.objects.filter(
+        applicant=request.user,
+        status='pending'
+    ).order_by('-applied_date')  # CHANGED: application_date → applied_date
+    
+    rejected_applications = LoanApplication.objects.filter(
+        applicant=request.user,
+        status='rejected'
+    ).order_by('-applied_date')  # CHANGED: application_date → applied_date
+    
+    # Calculate totals
+    total_active_balance = sum(loan.balance_remaining for loan in active_loans)
+    total_borrowed = sum(loan.principal_amount for loan in active_loans) + sum(loan.principal_amount for loan in completed_loans)
+    total_paid = sum(loan.amount_paid for loan in active_loans) + sum(loan.principal_amount for loan in completed_loans)
+    
+    context = {
+        'active_loans': active_loans,
+        'completed_loans': completed_loans,
+        'pending_applications': pending_applications,
+        'rejected_applications': rejected_applications,
+        'total_active_balance': total_active_balance,
+        'total_borrowed': total_borrowed,
+        'total_paid': total_paid,
+    }
+    
+    return render(request, 'lending/my_loans.html', context)

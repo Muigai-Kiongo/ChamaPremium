@@ -6,6 +6,7 @@ from .forms import DepositForm, WithdrawForm, SendMoneyForm, PayChamaForm, Trans
 from .models import Wallet, Transaction
 
 
+
 def wallet_view(request):
     wallet, created = Wallet.objects.get_or_create(
         user=request.user,

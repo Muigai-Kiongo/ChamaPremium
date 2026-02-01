@@ -2,40 +2,483 @@
 
 {% block title %}Wallet{% endblock %}
 
-{% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">My Wallet</h3>
-                </div>
-                <div class="card-body p-4">
-                    <div class="text-center mb-4">
-                        <h5 class="text-muted mb-3">Current Balance</h5>
-                        <h1 class="display-1 text-success fw-bold">KES {{ wallet.balance|floatformat:2 }}</h1>
-                    </div>
+{% block header_icon %}
+<svg viewBox="0 0 24 24">
+    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+    <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+    <path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
+</svg>
+{% endblock %}
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <a href="{% url 'wallet:deposit' %}" class="btn btn-primary w-100 btn-lg">Deposit</a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="{% url 'wallet:withdraw' %}" class="btn btn-danger w-100 btn-lg">Withdraw</a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="{% url 'wallet:send_money' %}" class="btn btn-success w-100 btn-lg">Send Money</a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="{% url 'wallet:pay_chama' %}" class="btn btn-warning w-100 btn-lg">Pay Chama</a>
-                        </div>
-                        <div class="col-md-12">
-                            <a href="{% url 'wallet:transaction_history' %}" class="btn btn-info w-100 btn-lg text-white">Transaction History</a>
-                        </div>
-                    </div>
-                </div>
+{% block page_title %}Wallet{% endblock %}
+{% block header_subtitle %}Manage your funds{% endblock %}
+
+{% block content %}
+<style>
+    /* ─── WALLET PAGE ─── */
+
+    .wallet-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        max-width: 680px;
+        margin: 0 auto;
+    }
+
+    /* ─── BALANCE CARD ─── */
+    .balance-card {
+        background: #0d1a13;
+        border-radius: 20px;
+        padding: 2.2rem 2rem 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 40px rgba(13,26,19,0.28);
+        animation: fadeUp 0.45s cubic-bezier(.22,1,.36,1) both;
+    }
+
+    /* Background geometry — mirrors header style */
+    .balance-card .bc-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+    .balance-card .bc-arc {
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid rgba(31,122,77,0.14);
+    }
+    .bc-arc-1 { width: 220px; height: 220px; top: -100px; right: -60px; }
+    .bc-arc-2 { width: 300px; height: 300px; top: -140px; right: -100px; border-color: rgba(31,122,77,0.07) !important; }
+    .balance-card .bc-glow {
+        position: absolute;
+        top: -20px; right: -40px;
+        width: 220px; height: 150px;
+        background: radial-gradient(ellipse, rgba(31,122,77,0.18) 0%, transparent 70%);
+        filter: blur(20px);
+    }
+    .balance-card .bc-gold-ring {
+        position: absolute;
+        width: 70px; height: 70px;
+        bottom: -35px; left: 60px;
+        border-radius: 50%;
+        border: 1px solid rgba(244,180,0,0.12);
+    }
+
+    /* Card header row */
+    .bc-top {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.8rem;
+    }
+
+    .bc-label-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .bc-label-row .bc-dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: var(--accent-gold);
+    }
+    .bc-label-row span {
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: rgba(255,255,255,0.4);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Card number placeholder */
+    .bc-card-num {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: rgba(255,255,255,0.28);
+        letter-spacing: 2.5px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Balance amount */
+    .bc-amount-block {
+        position: relative;
+        z-index: 2;
+        margin-bottom: 1.6rem;
+    }
+    .bc-currency {
+        font-size: 1rem;
+        font-weight: 600;
+        color: rgba(255,255,255,0.45);
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+    .bc-amount {
+        font-size: 2.6rem;
+        font-weight: 800;
+        color: #fff;
+        letter-spacing: -1.5px;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+    }
+    .bc-change {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-top: 6px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #4caf7a;
+        background: rgba(76,175,122,0.12);
+        border: 1px solid rgba(76,175,122,0.2);
+        border-radius: 20px;
+        padding: 3px 8px;
+    }
+    .bc-change svg {
+        width: 10px; height: 10px;
+        stroke: currentColor; fill: none;
+        stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    /* Bottom row — quick stats */
+    .bc-stats {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        gap: 1.5rem;
+        padding-top: 1.4rem;
+        border-top: 1px solid rgba(255,255,255,0.07);
+    }
+    .bc-stat { display: flex; flex-direction: column; gap: 3px; }
+    .bc-stat-label {
+        font-size: 0.6rem;
+        font-weight: 600;
+        color: rgba(255,255,255,0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+    }
+    .bc-stat-value {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: rgba(255,255,255,0.85);
+        letter-spacing: -0.2px;
+    }
+    .bc-stat-value.gold { color: var(--accent-gold); }
+
+    /* ─── ACTION BUTTONS ─── */
+    .actions-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        animation: fadeUp 0.5s cubic-bezier(.22,1,.36,1) 0.08s both;
+    }
+
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        text-decoration: none;
+        background: var(--card-white);
+        border: 1.5px solid var(--border-subtle);
+        border-radius: 14px;
+        padding: 1rem 1.1rem;
+        transition: all 0.22s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .action-btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(31,122,77,0.04), transparent);
+        opacity: 0;
+        transition: opacity 0.25s;
+    }
+
+    .action-btn:hover {
+        border-color: var(--primary-green);
+        box-shadow: 0 4px 20px rgba(31,122,77,0.12);
+        transform: translateY(-2px);
+    }
+    .action-btn:hover::before { opacity: 1; }
+    .action-btn:active { transform: translateY(0); }
+
+    /* Icon shell */
+    .action-btn .ab-icon {
+        width: 40px; height: 40px;
+        border-radius: 11px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        position: relative; z-index: 1;
+    }
+    .action-btn .ab-icon svg {
+        width: 18px; height: 18px;
+        stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        fill: none;
+    }
+
+    /* Color variants */
+    .ab-icon.green   { background: rgba(31,122,77,0.1);  border: 1px solid rgba(31,122,77,0.18); }
+    .ab-icon.green svg { stroke: var(--primary-green); }
+
+    .ab-icon.gold    { background: rgba(244,180,0,0.1);  border: 1px solid rgba(244,180,0,0.22); }
+    .ab-icon.gold svg { stroke: var(--accent-gold-dark); }
+
+    .ab-icon.blue    { background: rgba(11,60,93,0.08);  border: 1px solid rgba(11,60,93,0.18); }
+    .ab-icon.blue svg { stroke: var(--secondary-blue); }
+
+    .ab-icon.red     { background: rgba(199,53,53,0.08); border: 1px solid rgba(199,53,53,0.18); }
+    .ab-icon.red svg { stroke: #c73535; }
+
+    /* Text */
+    .action-btn .ab-text { position: relative; z-index: 1; }
+    .action-btn .ab-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        line-height: 1.3;
+    }
+    .action-btn .ab-desc {
+        font-size: 0.67rem;
+        font-weight: 500;
+        color: var(--text-light);
+        margin-top: 1px;
+    }
+
+    /* Chevron */
+    .action-btn .ab-chevron {
+        margin-left: auto;
+        position: relative; z-index: 1;
+    }
+    .action-btn .ab-chevron svg {
+        width: 14px; height: 14px;
+        stroke: var(--border-subtle); fill: none;
+        stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+        transition: stroke 0.2s, transform 0.2s;
+    }
+    .action-btn:hover .ab-chevron svg {
+        stroke: var(--primary-green);
+        transform: translateX(2px);
+    }
+
+    /* ─── HISTORY ROW ─── */
+    .history-row {
+        animation: fadeUp 0.5s cubic-bezier(.22,1,.36,1) 0.14s both;
+    }
+    .history-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        text-decoration: none;
+        background: var(--card-white);
+        border: 1.5px solid var(--border-subtle);
+        border-radius: 14px;
+        padding: 1rem 1.1rem;
+        width: 100%;
+        transition: all 0.22s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .history-btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(11,60,93,0.04), transparent);
+        opacity: 0;
+        transition: opacity 0.25s;
+    }
+    .history-btn:hover {
+        border-color: var(--secondary-blue);
+        box-shadow: 0 4px 20px rgba(11,60,93,0.1);
+        transform: translateY(-1px);
+    }
+    .history-btn:hover::before { opacity: 1; }
+
+    .history-btn .hb-icon {
+        width: 40px; height: 40px;
+        border-radius: 11px;
+        background: rgba(11,60,93,0.07);
+        border: 1px solid rgba(11,60,93,0.15);
+        display: flex; align-items: center; justify-content: center;
+        position: relative; z-index: 1;
+    }
+    .history-btn .hb-icon svg {
+        width: 18px; height: 18px;
+        stroke: var(--secondary-blue); fill: none;
+        stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    .history-btn .hb-text { position: relative; z-index: 1; flex: 1; }
+    .history-btn .hb-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+    .history-btn .hb-desc {
+        font-size: 0.67rem;
+        font-weight: 500;
+        color: var(--text-light);
+        margin-top: 1px;
+    }
+
+    .history-btn .hb-chevron { position: relative; z-index: 1; }
+    .history-btn .hb-chevron svg {
+        width: 14px; height: 14px;
+        stroke: var(--border-subtle); fill: none;
+        stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+        transition: stroke 0.2s, transform 0.2s;
+    }
+    .history-btn:hover .hb-chevron svg {
+        stroke: var(--secondary-blue);
+        transform: translateX(2px);
+    }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(14px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Stagger action buttons */
+    .actions-grid .action-btn:nth-child(1) { animation-delay: 0.12s; }
+    .actions-grid .action-btn:nth-child(2) { animation-delay: 0.17s; }
+    .actions-grid .action-btn:nth-child(3) { animation-delay: 0.22s; }
+    .actions-grid .action-btn:nth-child(4) { animation-delay: 0.27s; }
+    .actions-grid .action-btn { animation: fadeUp 0.45s cubic-bezier(.22,1,.36,1) both; }
+
+    /* ─── RESPONSIVE ─── */
+    @media(max-width:580px){
+        .actions-grid { grid-template-columns: 1fr; }
+        .bc-amount { font-size: 2.1rem; }
+    }
+</style>
+
+<div class="wallet-layout">
+
+    <!-- ─── BALANCE CARD ─── -->
+    <div class="balance-card">
+        <div class="bc-bg">
+            <div class="bc-arc bc-arc-1"></div>
+            <div class="bc-arc bc-arc-2"></div>
+            <div class="bc-glow"></div>
+            <div class="bc-gold-ring"></div>
+        </div>
+
+        <div class="bc-top">
+            <div class="bc-label-row">
+                <span class="bc-dot"></span>
+                <span>Wallet Balance</span>
+            </div>
+            <span class="bc-card-num">•••• 4821</span>
+        </div>
+
+        <div class="bc-amount-block">
+            <div class="bc-currency">KES</div>
+            <div class="bc-amount">{{ wallet.balance|floatformat:2 }}</div>
+            <span class="bc-change">
+                <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+                +2.4% this month
+            </span>
+        </div>
+
+        <div class="bc-stats">
+            <div class="bc-stat">
+                <span class="bc-stat-label">Total In</span>
+                <span class="bc-stat-value gold">KES 124,800</span>
+            </div>
+            <div class="bc-stat">
+                <span class="bc-stat-label">Total Out</span>
+                <span class="bc-stat-value">KES 40,300</span>
+            </div>
+            <div class="bc-stat">
+                <span class="bc-stat-label">Transactions</span>
+                <span class="bc-stat-value">38</span>
             </div>
         </div>
     </div>
+
+    <!-- ─── ACTION BUTTONS ─── -->
+    <div class="actions-grid">
+
+        <!-- Deposit -->
+        <a href="{% url 'wallet:deposit' %}" class="action-btn">
+            <div class="ab-icon green">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 5v14"/>
+                    <path d="M5 12h14"/>
+                </svg>
+            </div>
+            <div class="ab-text">
+                <div class="ab-title">Deposit</div>
+                <div class="ab-desc">Add funds</div>
+            </div>
+            <span class="ab-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></span>
+        </a>
+
+        <!-- Withdraw -->
+        <a href="{% url 'wallet:withdraw' %}" class="action-btn">
+            <div class="ab-icon red">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 19V5"/>
+                    <path d="M5 12h14"/>
+                </svg>
+            </div>
+            <div class="ab-text">
+                <div class="ab-title">Withdraw</div>
+                <div class="ab-desc">Cash out</div>
+            </div>
+            <span class="ab-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></span>
+        </a>
+
+        <!-- Send Money -->
+        <a href="{% url 'wallet:send_money' %}" class="action-btn">
+            <div class="ab-icon blue">
+                <svg viewBox="0 0 24 24">
+                    <line x1="22" y1="2" x2="11" y2="13"/>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+            </div>
+            <div class="ab-text">
+                <div class="ab-title">Send Money</div>
+                <div class="ab-desc">Transfer</div>
+            </div>
+            <span class="ab-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></span>
+        </a>
+
+        <!-- Pay Chama -->
+        <a href="{% url 'wallet:pay_chama' %}" class="action-btn">
+            <div class="ab-icon gold">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                </svg>
+            </div>
+            <div class="ab-text">
+                <div class="ab-title">Pay Chama</div>
+                <div class="ab-desc">Group payment</div>
+            </div>
+            <span class="ab-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></span>
+        </a>
+
+    </div>
+
+    <!-- ─── TRANSACTION HISTORY ─── -->
+    <div class="history-row">
+        <a href="{% url 'wallet:transaction_history' %}" class="history-btn">
+            <div class="hb-icon">
+                <svg viewBox="0 0 24 24">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+            </div>
+            <div class="hb-text">
+                <div class="hb-title">Transaction History</div>
+                <div class="hb-desc">View all past activity</div>
+            </div>
+            <span class="hb-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></span>
+        </a>
+    </div>
+
 </div>
 {% endblock %}

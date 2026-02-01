@@ -7,16 +7,559 @@
     <title>{% block title %}Chama System{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+
+        :root {
+            --primary-green: #1F7A4D;
+            --primary-green-dark: #165c39;
+            --secondary-blue: #0B3C5D;
+            --bg-grey: #F4F6F8;
+            --card-white: #FFFFFF;
+            --accent-gold: #F4B400;
+            --accent-gold-dark: #d9a200;
+            --text-dark: #2C3E50;
+            --text-light: #6C757D;
+            --border-subtle: #E0E5EA;
+            --sidebar-width: 270px;
+            --header-dark: #0d1a13;
+        }
+
+        /* ─── BODY ─── */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-grey);
+            min-height: 100vh;
+            color: var(--text-dark);
+            margin-left: var(--sidebar-width);
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                linear-gradient(rgba(244,246,248,0.95), rgba(244,246,248,0.97)),
+                url('https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=1920&q=80') center/cover fixed;
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        /* ─── SIDEBAR ─── */
+        .sidebar {
+            position: fixed;
+            left: 0; top: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--card-white);
+            border-right: 2px solid var(--border-subtle);
+            z-index: 1001;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            border-bottom: 2px solid var(--border-subtle);
+            background: linear-gradient(135deg, rgba(31,122,77,0.08), rgba(11,60,93,0.05));
+        }
+
+        .sidebar-brand {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+        }
+
+        .sidebar-logo {
+            width: 50px; height: 50px;
+            background: linear-gradient(135deg, var(--primary-green), #267A5A);
+            border-radius: 13px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.7rem;
+            box-shadow: 0 6px 18px rgba(31,122,77,0.3);
+            position: relative;
+        }
+
+        .sidebar-logo::after {
+            content: '';
+            position: absolute;
+            top: 7px; left: 7px; right: 7px;
+            height: 45%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.3), transparent);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .sidebar-title h1 {
+            font-weight: 800; font-size: 1.35rem;
+            color: var(--primary-green);
+            line-height: 1.1; letter-spacing: -0.5px; margin: 0;
+        }
+
+        .sidebar-title p {
+            font-size: 0.7rem; color: var(--text-light);
+            font-weight: 600; letter-spacing: 0.8px;
+            text-transform: uppercase; margin: 2px 0 0;
+        }
+
+        .sidebar-nav { flex: 1; padding: 1.5rem 1rem; overflow-y: auto; }
+
+        .nav-section-title {
+            font-size: 0.7rem; font-weight: 700;
+            color: var(--text-light); text-transform: uppercase;
+            letter-spacing: 1px; padding: 0 1rem;
+            margin-bottom: 0.8rem; margin-top: 1rem;
+        }
+        .nav-section-title:first-child { margin-top: 0; }
+
+        .sidebar-link {
+            display: flex; align-items: center; gap: 1rem;
+            padding: 0.9rem 1rem; margin-bottom: 0.4rem;
+            text-decoration: none; color: var(--text-dark);
+            border-radius: 10px; font-weight: 600; font-size: 0.95rem;
+            transition: all 0.3s ease;
+            border: 2px solid transparent; position: relative;
+        }
+        .sidebar-link span:first-child { font-size: 1.4rem; width: 32px; }
+        .sidebar-link:hover {
+            background: rgba(31,122,77,0.08);
+            color: var(--primary-green);
+            border-color: rgba(31,122,77,0.15);
+        }
+        .sidebar-link.active {
+            background: linear-gradient(135deg, var(--primary-green), #267A5A);
+            color: white; border-color: var(--primary-green);
+            box-shadow: 0 4px 16px rgba(31,122,77,0.35);
+        }
+        .sidebar-link.active::before {
+            content: '';
+            position: absolute; left: 0; top: 50%;
+            transform: translateY(-50%);
+            width: 4px; height: 60%;
+            background: var(--accent-gold);
+            border-radius: 0 4px 4px 0;
+        }
+
+        .sidebar-footer {
+            padding: 1.5rem;
+            border-top: 2px solid var(--border-subtle);
+            background: rgba(244,246,248,0.5);
+        }
+        .user-profile { display: flex; align-items: center; gap: 0.8rem; }
+        .user-avatar {
+            width: 42px; height: 42px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-gold), #FFC947);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; font-weight: 700; color: white;
+            box-shadow: 0 4px 12px rgba(244,180,0,0.3);
+        }
+        .user-info h4 { font-weight: 700; font-size: 0.9rem; color: var(--text-dark); line-height: 1.2; margin: 0; }
+        .user-info p { font-size: 0.75rem; color: var(--text-light); font-weight: 500; margin: 0; }
+
+        .sidebar-toggle {
+            display: none; position: fixed; bottom: 20px; right: 20px;
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg, var(--primary-green), #267A5A);
+            border: none; border-radius: 50%; color: white; font-size: 1.5rem;
+            box-shadow: 0 6px 20px rgba(31,122,77,0.4);
+            cursor: pointer; z-index: 1002;
+        }
+
+        /* ─────────────────────────────────────────
+           HEADER
+        ───────────────────────────────────────── */
+        .main-header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: var(--header-dark);
+            overflow: hidden;
+        }
+
+        /* --- Background geometry --- */
+        .hdr-bg {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        /* Concentric arcs — top right corner */
+        .hdr-bg .arc {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid;
+            border-color: rgba(31,122,77,0.18);
+        }
+        .hdr-bg .arc-1 { width: 280px; height: 280px; top: -130px; right: -80px; }
+        .hdr-bg .arc-2 { width: 360px; height: 360px; top: -170px; right: -120px; border-color: rgba(31,122,77,0.10); }
+        .hdr-bg .arc-3 { width: 440px; height: 440px; top: -210px; right: -160px; border-color: rgba(31,122,77,0.05); }
+
+        /* Gold accent ring — bottom left */
+        .hdr-bg .gold-ring {
+            position: absolute;
+            width: 90px; height: 90px;
+            bottom: -45px; left: 240px;
+            border-radius: 50%;
+            border: 1px solid rgba(244,180,0,0.15);
+        }
+
+        /* Angled gold stroke — subtle diagonal */
+        .hdr-bg .gold-stroke {
+            position: absolute;
+            top: -10px; right: 220px;
+            width: 1px; height: 140%;
+            background: linear-gradient(180deg, transparent 0%, rgba(244,180,0,0.2) 40%, rgba(244,180,0,0.2) 60%, transparent 100%);
+            transform: rotate(8deg);
+            transform-origin: top center;
+        }
+
+        /* Soft radial glow — right */
+        .hdr-bg .glow {
+            position: absolute;
+            top: -30px; right: -60px;
+            width: 280px; height: 180px;
+            background: radial-gradient(ellipse, rgba(31,122,77,0.2) 0%, transparent 70%);
+            filter: blur(24px);
+        }
+
+        /* --- Layout row --- */
+        .hdr-row {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem 2rem;
+            gap: 1.5rem;
+        }
+
+        /* --- Left: icon + title --- */
+        .hdr-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .hdr-icon {
+            width: 42px; height: 42px;
+            border-radius: 11px;
+            background: linear-gradient(145deg, var(--primary-green), #167a47);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 3px 14px rgba(31,122,77,0.38);
+        }
+        .hdr-icon svg {
+            width: 20px; height: 20px;
+            stroke: #fff; fill: none;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        }
+
+        .hdr-title h1 {
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: #fff;
+            margin: 0;
+            letter-spacing: -0.3px;
+            line-height: 1.25;
+        }
+
+        .hdr-title .hdr-sub {
+            display: flex; align-items: center; gap: 0.45rem;
+            margin-top: 2px;
+        }
+        .hdr-title .hdr-sub .dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+        }
+        .hdr-title .hdr-sub span {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: rgba(255,255,255,0.38);
+            letter-spacing: 0.2px;
+        }
+
+        /* --- Right: balance + actions --- */
+        .hdr-right {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        /* Balance card */
+        .hdr-balance {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(255,255,255,0.045);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px;
+            padding: 0.6rem 0.9rem;
+            transition: background 0.2s;
+        }
+        .hdr-balance:hover { background: rgba(255,255,255,0.07); }
+
+        .hdr-bal-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: rgba(244,180,0,0.12);
+            border: 1px solid rgba(244,180,0,0.22);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .hdr-bal-icon svg {
+            width: 15px; height: 15px;
+            stroke: var(--accent-gold); fill: none;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        }
+
+        .hdr-bal-text { display: flex; flex-direction: column; }
+        .hdr-bal-amount {
+            font-weight: 700; font-size: 0.85rem;
+            color: #fff; letter-spacing: -0.2px; line-height: 1.2;
+        }
+        .hdr-bal-label {
+            font-size: 0.6rem; font-weight: 500;
+            color: rgba(255,255,255,0.32);
+            text-transform: uppercase; letter-spacing: 0.6px;
+            margin-top: 1px;
+        }
+
+        /* Divider */
+        .hdr-sep {
+            width: 1px; height: 34px;
+            background: rgba(255,255,255,0.09);
+            flex-shrink: 0;
+        }
+
+        /* Icon buttons */
+        .hdr-btn {
+            width: 38px; height: 38px;
+            border-radius: 9px;
+            background: rgba(255,255,255,0.045);
+            border: 1px solid rgba(255,255,255,0.07);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .hdr-btn:hover {
+            background: rgba(255,255,255,0.09);
+            border-color: rgba(255,255,255,0.14);
+            transform: translateY(-1px);
+        }
+        .hdr-btn svg {
+            width: 17px; height: 17px;
+            stroke: rgba(255,255,255,0.55); fill: none;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+            transition: stroke 0.2s;
+        }
+        .hdr-btn:hover svg { stroke: #fff; }
+
+        /* Notif dot */
+        .hdr-btn .notif-dot {
+            position: absolute; top: 6px; right: 6px;
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--accent-gold);
+            border: 2px solid var(--header-dark);
+        }
+
+        /* User chip */
+        .hdr-user {
+            display: flex; align-items: center; gap: 0.55rem;
+            background: rgba(255,255,255,0.045);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 9px;
+            padding: 0.38rem 0.6rem 0.38rem 0.38rem;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .hdr-user:hover { background: rgba(255,255,255,0.07); }
+
+        .hdr-user-avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-dark));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.65rem; font-weight: 700; color: #fff;
+        }
+        .hdr-user-name {
+            font-size: 0.76rem; font-weight: 600;
+            color: rgba(255,255,255,0.82);
+        }
+        .hdr-user-caret svg {
+            width: 11px; height: 11px;
+            stroke: rgba(255,255,255,0.3); fill: none;
+            stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+        }
+
+        /* ─── CONTENT ─── */
+        .content-wrapper {
+            max-width: 1400px;
+            margin: 2.5rem auto;
+            padding: 0 2rem;
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media(max-width:992px){
+            body { margin-left: 0; }
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+            .sidebar.active { transform: translateX(0); }
+            .sidebar-toggle { display: flex; align-items: center; justify-content: center; }
+        }
+        @media(max-width:768px){
+            .hdr-row { padding: 1rem 1.2rem; }
+            .hdr-title h1 { font-size: 1.1rem; }
+            .hdr-balance { display: none; }
+            .hdr-sep { display: none; }
+            .content-wrapper { margin: 1.8rem auto; padding: 0 1rem; }
+        }
+        @media(max-width:480px){
+            .hdr-title h1 { font-size: 1rem; }
+            .hdr-right { gap: 0.35rem; }
+            .hdr-user-name { display: none; }
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">Chama System</a>
-        </div>
-    </nav>
-    <div class="main-content">
-        {% block content %}{% endblock %}
+
+<!-- ─── SIDEBAR ─── -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <a href="/" class="sidebar-brand">
+            <div class="sidebar-logo">💰</div>
+            <div class="sidebar-title">
+                <h1>ChamaPrimium</h1>
+                <p>Together We Grow</p>
+            </div>
+        </a>
     </div>
-    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+
+    <nav class="sidebar-nav">
+        <div class="nav-section-title">Main Menu</div>
+
+        <a href="{% url 'lending:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <span>📊</span><span>Dashboard</span>
+        </a>
+        <a href="{% url 'wallet:wallet_dashboard' %}" class="sidebar-link {% if request.resolver_match.namespace == 'wallet' %}active{% endif %}">
+            <span>💳</span><span>Wallet</span>
+        </a>
+        <a href="{% url 'lending:loan' %}" class="sidebar-link {% if request.resolver_match.namespace == 'lending' and request.resolver_match.url_name == 'loan' %}active{% endif %}">
+            <span>🏦</span><span>Loans</span>
+        </a>
+
+        <div class="nav-section-title">Account</div>
+        <a href="#profile" class="sidebar-link">
+            <span>👤</span><span>Profile</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-profile">
+            <div class="user-avatar">JD</div>
+            <div class="user-info">
+                <h4>John Doe</h4>
+                <p>Member</p>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('active')">☰</button>
+
+<!-- ─── HEADER ─── -->
+<header class="main-header">
+
+    <!-- Background geometry -->
+    <div class="hdr-bg">
+        <div class="arc arc-1"></div>
+        <div class="arc arc-2"></div>
+        <div class="arc arc-3"></div>
+        <div class="gold-ring"></div>
+        <div class="gold-stroke"></div>
+        <div class="glow"></div>
+    </div>
+
+    <!-- Main row -->
+    <div class="hdr-row">
+
+        <!-- Left -->
+        <div class="hdr-left">
+            <!-- Green icon box with SVG -->
+            <div class="hdr-icon">
+                {% block header_icon %}
+                <!-- Dashboard: bar chart icon -->
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="7" height="18" rx="1"/>
+                    <rect x="14" y="8" width="7" height="13" rx="1"/>
+                </svg>
+                {% endblock %}
+            </div>
+
+            <div class="hdr-title">
+                <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                <div class="hdr-sub">
+                    <span class="dot"></span>
+                    <span>{% block header_subtitle %}Welcome back, John{% endblock %}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right -->
+        <div class="hdr-right">
+
+            <!-- Balance -->
+            <div class="hdr-balance">
+                <div class="hdr-bal-icon">
+                    <!-- Wallet icon -->
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+                        <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+                        <path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
+                    </svg>
+                </div>
+                <div class="hdr-bal-text">
+                    <span class="hdr-bal-amount">KSh 84,500</span>
+                    <span class="hdr-bal-label">Wallet Balance</span>
+                </div>
+            </div>
+
+            <div class="hdr-sep"></div>
+
+            <!-- Search -->
+            <button class="hdr-btn" aria-label="Search">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                </svg>
+            </button>
+
+            <!-- Notifications -->
+            <button class="hdr-btn" aria-label="Notifications">
+                <svg viewBox="0 0 24 24">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                <span class="notif-dot"></span>
+            </button>
+
+            <!-- User -->
+            <div class="hdr-user">
+                <div class="hdr-user-avatar">JD</div>
+                <span class="hdr-user-name">John</span>
+                <span class="hdr-user-caret">
+                    <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                </span>
+            </div>
+
+        </div>
+    </div>
+</header>
+
+<!-- ─── CONTENT ─── -->
+<div class="content-wrapper">
+    {% block content %}{% endblock %}
+</div>
+
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>

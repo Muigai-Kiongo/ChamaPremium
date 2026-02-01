@@ -29,6 +29,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'lending',
     'wallet',
+        # 3rd party
+    'crispy_forms',
+    'crispy_bootstrap5',
+    
+    # Local
+    'channels_app',
+    
+    
 ]
 
 MIDDLEWARE = [
@@ -111,3 +119,34 @@ STATIC_ROOT = os.path.join(BASE_DIR , 'staticfiles')
 STATICFILES_DIRS = [
   os.path.join(BASE_DIR , 'static')
 ]
+
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Channels
+ASGI_APPLICATION = 'core.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',  # Redis in production
+    },
+}
+
+# Celery
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# Crispy Forms
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# Login
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

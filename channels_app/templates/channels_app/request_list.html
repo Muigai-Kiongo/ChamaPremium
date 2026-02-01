@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between mb-4">
+    <h2>Requests - {{ channel.name }}</h2>
+    <a href="{% url 'channels_app:request_create' channel.slug %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> New Request
+    </a>
+</div>
+
+<div class="row">
+    {% for req in requests %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <span class="badge bg-{% if req.status == 'pending' %}warning bg-warning{% elif req.status == 'approved' %}success{% else %}secondary{% endif %}">
+                    {{ req.status|title }}
+                </span>
+                <small>{{ req.created_at|date:"M d" }}</small>
+            </div>
+            <div class="card-body">
+                <h6>{{ req.title }}</h6>
+                <p>{{ req.description|truncatewords:15 }}</p>
+                {% if req.amount %}
+                <h5 class="text-success">KSh {{ req.amount|floatformat:0 }}</h5>
+                {% endif %}
+                <small class="text-muted">by {{ req.requester.username }}</small>
+            </div>
+            {% if is_admin and req.status == 'pending' %}
+            <div class="card-footer">
+                <a href="{% url 'channels_app:request_update' channel.slug req.id %}" class="btn btn-sm btn-warning">
+                    Review
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            No requests yet. <a href="{% url 'channels_app:request_create' channel.slug %}">Make first!</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
