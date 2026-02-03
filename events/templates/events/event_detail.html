@@ -1,47 +1,177 @@
 {% extends "base.html" %}
+{% block title %}{{ event.title }} | Chama Premium{% endblock %}
 
 {% block content %}
-<h2>{{ event.title }}</h2>
-<p>{{ event.description }}</p>
-<p>{{ event.start_date|date:"M d, Y H:i" }} - {{ event.end_date|date:"M d, Y H:i" }}</p>
+<style>
+    .detail-card {
+        background: var(--white);
+        border-radius: 24px;
+        border: none;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
 
-<h3>Gallery</h3>
-<ul>
-  {% for image in images %}
-    <li>
-      <img src="{{ image.image.url }}" width="200" alt="Event image">
-    </li>
-  {% empty %}
-    <li>No images uploaded</li>
-  {% endfor %}
-</ul>
+    .gallery-img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 12px;
+        transition: transform 0.3s ease;
+        cursor: pointer;
+    }
 
-{% if user.is_authenticated %}
-  <!-- Image upload form -->
-  <form method="post" enctype="multipart/form-data" action="{% url 'events:upload_event_image' event.pk %}">
-    {% csrf_token %}
-    {{ image_form.as_p }}
-    <button type="submit">Upload Image</button>
-  </form>
-{% endif %}
+    .gallery-img:hover {
+        transform: scale(1.05);
+    }
 
-{% if request.user.is_staff %}
-    <a href="{% url 'events:event_delete' event.pk %}">Delete Event</a>
-{% endif %}
+    .info-label {
+        color: var(--primary-blue);
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
 
-{% for image in images %}
-    <div class="event-image">
-        <img src="{{ image.image.url }}" alt="Event image" width="200">
-        {% if request.user.is_staff %}
-            <form method="post" action="{% url 'events:event_image_delete' image.pk %}" style="display:inline;">
+    .btn-back {
+        color: white;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: 0.3s;
+    }
+
+    .btn-back:hover {
+        opacity: 0.8;
+        transform: translateX(-5px);
+    }
+
+    .upload-box {
+        background: var(--soft-blue);
+        border: 2px dashed rgba(0, 97, 255, 0.2);
+        border-radius: 15px;
+        padding: 20px;
+    }
+
+    .delete-overlay {
+        position: relative;
+    }
+
+    .delete-btn-mini {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(220, 53, 69, 0.9);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 2px 6px;
+        font-size: 0.7rem;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{% url 'events:event_list' %}" class="btn-back">
+        <i data-lucide="arrow-left" size="20"></i> Back to Events
+    </a>
+
+    {% if user.is_staff %}
+        <div class="d-flex gap-2">
+            <a href="{% url 'events:event_update' event.pk %}" class="btn btn-light fw-bold text-primary rounded-pill px-4 shadow-sm">
+                <i data-lucide="edit" size="16" class="me-1"></i> Edit
+            </a>
+            <form method="post" action="{% url 'events:event_delete' event.pk %}" class="d-inline">
                 {% csrf_token %}
-                <button type="submit">Delete</button>
+                <button type="submit" class="btn btn-danger rounded-pill px-4 shadow-sm fw-bold" onclick="return confirm('Delete this event?')">
+                    <i data-lucide="trash-2" size="16" class="me-1"></i> Delete
+                </button>
             </form>
-        {% endif %}
-    </div>
-{% endfor %}
+        </div>
+    {% endif %}
+</div>
 
-<!-- Navigation links -->
-<a href="{% url 'events:event_list' %}">Back to Events</a>
-<a href="{% url 'events:event_create' %}">Create New Event</a>
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="detail-card p-4 p-md-5 mb-4">
+            <div class="info-label mb-2">Event Details</div>
+            <h1 class="display-5 fw-bold mb-4" style="color: var(--text-dark);">{{ event.title }}</h1>
+            
+            <div class="d-flex flex-wrap gap-4 mb-5">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-primary bg-opacity-10 p-2 rounded-3">
+                        <i data-lucide="calendar" class="text-primary"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block">Start Date</small>
+                        <span class="fw-bold">{{ event.start_date|date:"M d, Y" }} @ {{ event.start_date|date:"H:i" }}</span>
+                    </div>
+                </div>
+
+                {% if event.end_date %}
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-info bg-opacity-10 p-2 rounded-3">
+                        <i data-lucide="clock" class="text-info"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block">End Date</small>
+                        <span class="fw-bold">{{ event.end_date|date:"M d, Y" }} @ {{ event.end_date|date:"H:i" }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="info-label mb-3">Description</div>
+            <p class="lead text-muted mb-0" style="line-height: 1.8;">
+                {{ event.description }}
+            </p>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="detail-card p-4">
+            <h5 class="fw-bold mb-4 d-flex align-items-center">
+                <i data-lucide="image" class="me-2 text-primary"></i> Gallery
+            </h5>
+
+            {% if images %}
+                <div class="row g-3 mb-4">
+                    {% for image in images %}
+                        <div class="col-6 delete-overlay">
+                            <img src="{{ image.image.url }}" class="gallery-img" alt="Event image" data-bs-toggle="modal" data-bs-target="#imgModal{{ image.pk }}">
+                            
+                            {% if user.is_staff %}
+                                <form method="post" action="{% url 'events:event_image_delete' image.pk %}">
+                                    {% csrf_token %}
+                                    <button class="delete-btn-mini shadow-sm">
+                                        <i data-lucide="x" size="12"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4 bg-light rounded-4 mb-4">
+                    <i data-lucide="camera-off" class="text-muted mb-2"></i>
+                    <p class="text-muted small mb-0">No images yet</p>
+                </div>
+            {% endif %}
+
+            {% if user.is_staff %}
+                <div class="upload-box text-center">
+                    <p class="small fw-bold text-primary mb-3">Add to Gallery</p>
+                    <form method="post" action="{% url 'events:add_event_image' event.pk %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="file" name="image" class="form-control form-control-sm mb-2 input-style" required>
+                        <button class="btn btn-primary-custom w-100 btn-sm py-2">
+                            <i data-lucide="upload" size="14" class="me-1"></i> Upload
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
 {% endblock %}

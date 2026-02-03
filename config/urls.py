@@ -5,7 +5,8 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('events/', include('events.urls')),  # delegate events URLs to the app
+    path('events/', include('events.urls')), 
+    
 ]
 
 

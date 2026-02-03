@@ -1,98 +1,79 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.utils.timezone import now
-
+from django.core.paginator import Paginator
 from .models import Event, EventImage
 from .forms import EventForm, EventImageForm
 
+# Utility function to check if user is admin
+def is_admin(user):
+    return user.is_staff  # assuming admin users have is_staff=True
 
+# List of events - everyone can view
+@login_required
 def event_list(request):
-    upcoming_events = Event.objects.filter(start_date__gte=now()).order_by("start_date")
-    past_events = Event.objects.filter(end_date__lt=now()).order_by("-end_date")
+    events = Event.objects.all().order_by('-start_date')
+    paginator = Paginator(events, 8)  # show 8 events per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'events/event_list.html', {'events': page_obj})
 
-    return render(
-        request,
-        "events/event_list.html",
-        {
-            "upcoming_events": upcoming_events,
-            "past_events": past_events,
-        },
-    )
-
-
+# Event detail view - everyone can view
+@login_required
 def event_detail(request, pk):
     event = get_object_or_404(Event, pk=pk)
     images = event.images.all()
+    return render(request, 'events/event_detail.html', {'event': event, 'images': images})
 
-    image_form = EventImageForm()
-
-    return render(
-        request,
-        "events/event_detail.html",
-        {
-            "event": event,
-            "images": images,
-            "image_form": image_form,
-        },
-    )
-
-
-def is_event_creator(user):
-    # Adjust this logic to your project roles
-    return user.is_staff or user.groups.filter(name__in=['group_leader', 'admin']).exists()
-
-
+# Create event - admin only
 @login_required
-@user_passes_test(is_event_creator)
+@user_passes_test(is_admin)
 def event_create(request):
-    if request.method == "POST":
+    if request.method == 'POST':
         form = EventForm(request.POST)
-        files = request.FILES.getlist("images")  # handle multiple files
         if form.is_valid():
-            event = form.save(commit=False)
-            event.created_by = request.user
-            event.save()
-            # Save uploaded images with uploaded_by
-            for f in files:
-                EventImage.objects.create(
-                    event=event,
-                    image=f,
-                    uploaded_by=request.user  # <-- fixed
-                )
-            return redirect("events:event_list")
-        print("Form errors:", form.errors)
+            event = form.save()
+            return redirect('events:event_detail', pk=event.pk)
     else:
         form = EventForm()
-    return render(request, "events/event_form.html", {"form": form})
+    return render(request, 'events/event_form.html', {'form': form, 'action': 'Create'})
 
+# Update event - admin only
+@login_required
+@user_passes_test(is_admin)
+def event_update(request, pk):
+    event = get_object_or_404(Event, pk=pk)
+    if request.method == 'POST':
+        form = EventForm(request.POST, instance=event)
+        if form.is_valid():
+            form.save()
+            return redirect('events:event_detail', pk=event.pk)
+    else:
+        form = EventForm(instance=event)
+    return render(request, 'events/event_form.html', {'form': form, 'action': 'Update'})
+
+# Delete event - admin only
+@login_required
+@user_passes_test(is_admin)
 def event_delete(request, pk):
     event = get_object_or_404(Event, pk=pk)
-    if request.method == "POST":
+    if request.method == 'POST':
         event.delete()
-        return redirect("events:event_list")
-    return render(request, "events/event_confirm_delete.html", {"event": event})
+        return redirect('events:event_list')
+    return render(request, 'events/event_confirm_delete.html', {'event': event})
 
-
+# Optional: add event images - admin only
 @login_required
-def upload_event_image(request, pk):
+@user_passes_test(is_admin)
+def add_event_image(request, pk):
     event = get_object_or_404(Event, pk=pk)
-
-    if request.method == "POST":
+    if request.method == 'POST':
         form = EventImageForm(request.POST, request.FILES)
         if form.is_valid():
             image = form.save(commit=False)
             image.event = event
-            image.uploaded_by = request.user
             image.save()
+            return redirect('events:event_detail', pk=event.pk)
+    else:
+        form = EventImageForm()
+    return render(request, 'events/add_event_image.html', {'form': form, 'event': event})
 
-    return redirect("events:event_detail", pk=pk)
-
-
-@login_required
-@user_passes_test(lambda u: u.is_staff)  # only admins
-def event_image_delete(request, pk):
-    image = get_object_or_404(EventImage, pk=pk)
-    event_pk = image.event.pk
-    if request.method == "POST":
-        image.delete()
-    return redirect("events:event_detail", pk=event_pk)

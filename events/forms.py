@@ -2,15 +2,9 @@ from django import forms
 from .models import Event, EventImage
 from django.utils.timezone import now
 
-from django.utils.timezone import now
-
 class EventForm(forms.ModelForm):
-    start_date = forms.DateTimeField(
-        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'})
-    )
-    end_date = forms.DateTimeField(
-        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'})
-    )
+    start_date = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}))
+    end_date = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}))
 
     class Meta:
         model = Event
@@ -20,7 +14,6 @@ class EventForm(forms.ModelForm):
         cleaned_data = super().clean()
         start = cleaned_data.get("start_date")
         end = cleaned_data.get("end_date")
-
         if start and end:
             if start >= end:
                 raise forms.ValidationError("Start date must be before end date.")
