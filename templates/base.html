@@ -24,6 +24,9 @@
             --border-subtle: #E0E5EA;
             --sidebar-width: 270px;
             --header-dark: #0d1a13;
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            --premium-gradient: linear-gradient(135deg, var(--primary-green-dark) 0%, #1a5c3a 100%);
         }
 
         /* ─── BODY ─── */
@@ -105,6 +108,8 @@
         }
 
         .sidebar-nav { flex: 1; padding: 1.5rem 1rem; overflow-y: auto; }
+        
+        
 
         .nav-section-title {
             font-size: 0.7rem; font-weight: 700;
@@ -166,6 +171,25 @@
             box-shadow: 0 6px 20px rgba(31,122,77,0.4);
             cursor: pointer; z-index: 1002;
         }
+        .dashboard-card {
+    background: var(--glass-bg);
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 20px;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.3s ease;
+        }
+        .dashboard-card:hover {
+    transform: translateY(-5px);
+}
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
 
         /* ─────────────────────────────────────────
            HEADER
@@ -418,6 +442,18 @@
             .hdr-right { gap: 0.35rem; }
             .hdr-user-name { display: none; }
         }
+        /* NOTIFICATIONS */
+.notification-badge {
+    font-size: 0.6rem; min-width: 16px; height: 16px; font-weight: 700;
+}
+#notificationDropdown {
+    display: none; position: absolute; top: 110%; right: 0; width: 360px; 
+    max-height: 450px; overflow-y: auto; z-index: 1055; background: var(--card-white); 
+    border-radius: 12px; margin-top: 5px; border: 1px solid var(--border-subtle);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+#notificationDropdown.show { display: block !important; }
+
     </style>
 </head>
 <body>
@@ -428,8 +464,8 @@
         <a href="/" class="sidebar-brand">
             <div class="sidebar-logo">💰</div>
             <div class="sidebar-title">
-                <h1>ChamaPrimium</h1>
-                <p>Together We Grow</p>
+                <h1>Chama Premium</h1>
+                <p>Together we grow</p>
             </div>
         </a>
     </div>
@@ -446,6 +482,15 @@
         <a href="{% url 'lending:loan' %}" class="sidebar-link {% if request.resolver_match.namespace == 'lending' and request.resolver_match.url_name == 'loan' %}active{% endif %}">
             <span>🏦</span><span>Loans</span>
         </a>
+        <a href="{% url 'channels_app:notifications_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'notifications_list' %}active{% endif %}">
+        <span>🔔</span>
+        <span>Notifications</span>
+        {% if global_unread_count > 0 %}
+            <span class="badge rounded-pill bg-warning text-dark ms-auto" style="font-size: 0.7rem; padding: 0.35em 0.65em;">
+                {{ global_unread_count }}
+            </span>
+        {% endif %}
+    </a>
 
         <div class="nav-section-title">Account</div>
         <a href="#profile" class="sidebar-link">
@@ -534,13 +579,15 @@
             </button>
 
             <!-- Notifications -->
-            <button class="hdr-btn" aria-label="Notifications">
-                <svg viewBox="0 0 24 24">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                </svg>
-                <span class="notif-dot"></span>
-            </button>
+            <div class="hdr-btn position-relative" id="notificationBell" tabindex="0">
+    <svg viewBox="0 0 24 24">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>
+    {% if unread_count > 0 %}
+        <span class="notification-badge position-absolute top-2 start-100 translate-middle badge rounded-pill bg-warning border border-light">{{ unread_count }}</span>
+    {% endif %}
+</div>
 
             <!-- User -->
             <div class="hdr-user">
@@ -554,12 +601,129 @@
         </div>
     </div>
 </header>
+<!-- Notifications Dropdown -->
+<div class="hdr-btn position-relative" role="button" tabindex="0" id="notificationBell">
+    <svg viewBox="0 0 24 24">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>
+    {% if unread_count > 0 %}
+        <span class="notif-dot position-absolute top-4 start-100 translate-middle badge rounded-pill bg-warning border border-light" style="font-size:0.6rem; width:10px;height:10px;">{{ unread_count }}</span>
+    {% endif %}
+</div>
+
+<!-- Notification Dropdown -->
+<div id="notificationDropdown">
+    <div class="p-3 border-bottom" style="background: linear-gradient(135deg, rgba(31,122,77,0.08), rgba(244,180,0,0.05));">
+        <h6 class="mb-0 fw-bold" style="color:white var(--primary-green);">Notifications</h6>
+        <small class="text-muted">{% if unread_count > 0 %}{{ unread_count }} unread{% endif %}</small>
+    </div>
+    
+    {% if notifications %}
+        {% for notification in notifications %}
+            <a href="#" class="notification-item {% if not notification.is_read %}unread{% endif %}">
+                <div class="d-flex align-items-start gap-3">
+                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary-green), #267A5A); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: black; font-size: 1.1rem;">🔔</div>
+                    <div>
+                        <p class="mb-1 fw-semibold">{{ notification.message }}</p>
+                        <small>{{ notification.created_at|date:"M d, H:i" }}</small>
+                    </div>
+                </div>
+            </a>
+        {% endfor %}
+        <a href="{% url 'channels_app:notifications_list' %}" class="p-3 text-center fw-semibold border-top d-block" style="color: var(--primary-green);">View All</a>
+    {% else %}
+        <div class="text-center py-4 text-muted">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔔</div>
+            <p class="mb-0">No notifications</p>
+        </div>
+    {% endif %}
+</div>
+
+
 
 <!-- ─── CONTENT ─── -->
 <div class="content-wrapper">
     {% block content %}{% endblock %}
 </div>
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="dashboard-card p-4 text-white" style="background: var(--premium-gradient);">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <span class="badge rounded-pill" style="background: var(--accent-gold); color: var(--primary-green-dark);">+12% this month</span>
+            </div>
+            <h6 class="text-white-50 mb-1">Total Contributions</h6>
+            <h2 class="fw-bold mb-0">KES 145,200</h2>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="dashboard-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="stat-icon" style="background: #fff5f5; color: #e53e3e;">
+                    <i class="fas fa-hand-holding-usd"></i>
+                </div>
+                <small class="text-muted">Due in 12 days</small>
+            </div>
+            <h6 class="text-muted mb-1">Active Loan Balance</h6>
+            <h2 class="fw-bold mb-0" style="color: var(--primary-green-dark);">KES 42,000</h2>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="dashboard-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="stat-icon" style="background: #f0fff4; color: var(--primary-green);">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <i class="fas fa-info-circle text-muted" title="Based on 3x savings"></i>
+            </div>
+            <h6 class="text-muted mb-1">Max Borrowing Limit</h6>
+            <h2 class="fw-bold mb-0" style="color: var(--secondary-blue);">KES 435,600</h2>
+        </div>
+    </div>
+</div>
+<div class="dashboard-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0" style="color: var(--primary-green-dark);">Monthly Goal</h5>
+        <span class="fw-bold text-success">75%</span>
+    </div>
+    
+    <div class="progress mb-3" style="height: 12px; border-radius: 10px; background: #edf2f7;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+             role="progressbar" 
+             style="width: 75%; background: var(--primary-green); border-radius: 10px;">
+        </div>
+    </div>
+    
+    <p class="text-muted small mb-0">
+        <i class="fas fa-bullseye me-1"></i> 
+        Save <strong>KES 5,000</strong> more to reach your February target.
+    </p>
+</div>
 
 <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bell = document.getElementById('notificationBell');
+    const dropdown = document.getElementById('notificationDropdown');
+    
+    bell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        dropdown.classList.toggle('show');
+    });
+    
+    document.addEventListener('click', function(e) {
+        if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
+});
+</script>
+
 </body>
 </html>

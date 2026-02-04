@@ -90,7 +90,7 @@ class Notification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 # CHAT
-'''class ChatRoom(models.Model):
+class ChatRoom(models.Model):
     channel = models.ForeignKey(Channel, on_delete=models.CASCADE, related_name='chat_rooms')
     name = models.CharField(max_length=100, default='General')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -100,7 +100,7 @@ class ChatMessage(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-'''
+
 # REQUESTS
 class Request(models.Model):
     TYPE_CHOICES = [

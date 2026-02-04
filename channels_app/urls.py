@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 from . import views
 
 app_name = 'channels_app'
@@ -9,8 +9,8 @@ urlpatterns = [
     
     # Channels
     path('', views.channel_list, name='channel_list'),
+    path('channel/create/', views.channel_create, name='channel_create'),
     path('channel/<slug:slug>/', views.channel_detail, name='channel_detail'),
-    
     # Webinars
     path('channel/<slug:channel_slug>/webinars/', views.webinar_list, name='webinar_list'),
     path('channel/<slug:channel_slug>/webinars/create/', views.webinar_create, name='webinar_create'),
@@ -27,6 +27,7 @@ urlpatterns = [
 
     path('notifications/', views.notifications_list, name='notifications_list'),
     path('notifications/<int:notification_id>/read/', views.notification_mark_read, name='notification_mark_read'),
-    path('notifications/mark-all-read/', views.notification_mark_all_read, name='notification_mark_all_read'),
+    path('notifications/mark-all-read/', views.notification_mark_all_read, name='mark_all_read'),
     path('api/notifications/count/', views.notification_count, name='notification_count'),
+    path('delete/<int:pk>/', views.delete_notification, name='delete_notification'),
 ]
