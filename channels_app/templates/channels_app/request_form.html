@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white py-4">
+                <h4 class="mb-0">
+                    <i class="fas fa-paper-plane me-2"></i>
+                    New Request - {{ channel.name }}
+                </h4>
+            </div>
+            
+            <div class="card-body p-4">
+                <form method="post" id="requestForm">
+                    {% csrf_token %}
+                    
+                    <!-- Request Type -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-list-alt me-2"></i>Request Type
+                        </label>
+                        {{ form.type }}
+                        <small class="form-text text-muted d-block mt-2">
+                            Select the type of request you want to submit
+                        </small>
+                    </div>
+                    
+                    <!-- Title -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-heading me-2"></i>Request Title
+                        </label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="text-danger small mt-1">{{ form.title.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-align-left me-2"></i>Description
+                        </label>
+                        {{ form.description }}
+                        <small class="form-text text-muted">
+                            Provide detailed information about your request
+                        </small>
+                        {% if form.description.errors %}
+                            <div class="text-danger small mt-1">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Amount (conditional) -->
+                    <div class="mb-4" id="amountField" style="display:none;">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-money-bill-wave me-2"></i>Amount (KSh)
+                        </label>
+                        {{ form.amount }}
+                        <small class="form-text text-muted">
+                            Enter amount in Kenyan Shillings (Required for financial requests)
+                        </small>
+                        {% if form.amount.errors %}
+                            <div class="text-danger small mt-1">{{ form.amount.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Form Errors -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Buttons -->
+                    <div class="d-flex gap-3 justify-content-end mt-5">
+                        <a href="{% url 'channels_app:request_list' channel.slug %}" class="btn btn-secondary px-4">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Info Cards -->
+        <div class="row mt-4 g-3">
+            <div class="col-md-4">
+                <div class="card border-primary">
+                    <div class="card-body text-center">
+                        <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                        <h6>Membership</h6>
+                        <small class="text-muted">Join channel</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-success">
+                    <div class="card-body text-center">
+                        <i class="fas fa-money-bill-wave fa-2x text-success mb-2"></i>
+                        <h6>Financial</h6>
+                        <small class="text-muted">Loans & withdrawals</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-info">
+                    <div class="card-body text-center">
+                        <i class="fas fa-cog fa-2x text-info mb-2"></i>
+                        <h6>Operational</h6>
+                        <small class="text-muted">Updates & changes</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+const typeSelect = document.querySelector('select[name="type"]');
+const amountField = document.getElementById('amountField');
+
+typeSelect.addEventListener('change', function() {
+    if (this.value === 'financial') {
+        amountField.style.display = 'block';
+        document.querySelector('input[name="amount"]').required = true;
+    } else {
+        amountField.style.display = 'none';
+        document.querySelector('input[name="amount"]').required = false;
+    }
+});
+
+
+typeSelect.dispatchEvent(new Event('change'));
+</script>
+{% endblock %}

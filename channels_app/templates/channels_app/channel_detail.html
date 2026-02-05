@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-home text-primary me-2"></i>
+                {{ channel.name }}
+            </h2>
+            {% if is_admin %}
+            <div>
+                <a href="{% url 'channels_app:webinar_create' channel.slug %}" class="btn btn-success me-2">
+                    <i class="fas fa-video-plus"></i> New Webinar
+                </a>
+                <a href="/admin/" class="btn btn-outline-secondary">
+                    <i class="fas fa-cog"></i> Admin
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="row mb-5 g-3">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-calendar-check fa-2x mb-2"></i>
+                        <h3>{{ channel.webinars.count }}</h3>
+                        <p class="mb-0">Webinars</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-users fa-2x mb-2"></i>
+                        <h3>{{ channel.memberships.count }}</h3>
+                        <p class="mb-0">Members</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-clipboard-list fa-2x mb-2"></i>
+                        <h3>{{ channel.requests.count }}</h3>
+                        <p class="mb-0">Requests</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-comments fa-2x mb-2"></i>
+                        <h3>Chat</h3>
+                        <p class="mb-0">Active</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Webinars -->
+        <div class="card shadow mb-5">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-video me-2 text-primary"></i>
+                    Upcoming Webinars
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for webinar in recent_webinars %}
+                <div class="d-flex align-items-center p-3 border-bottom {% cycle '' 'bg-light' %}">
+                    <div class="flex-shrink-0">
+                        <span class="badge bg-{{ webinar.status|lower }} fs-6">{{ webinar.status|title }}</span>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="mb-1">{{ webinar.title }}</h6>
+                        <small class="text-muted">{{ webinar.scheduled_at|date:"M d, Y H:i" }}</small>
+                    </div>
+                    <a href="{% url 'channels_app:webinar_detail' channel.slug webinar.id %}" 
+                       class="btn btn-sm btn-outline-primary">
+                        Details
+                    </a>
+                </div>
+                {% empty %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No upcoming webinars</p>
+                    {% if is_admin %}
+                    <a href="{% url 'channels_app:webinar_create' channel.slug %}" class="btn btn-primary">
+                        Schedule First Webinar
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Channel Info</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Members:</strong> {{ channel.memberships.count }}</p>
+                <p><strong>Your Role:</strong> 
+                    {% if is_admin %}
+                        <span class="badge bg-success fs-6">Admin</span>
+                    {% else %}
+                        <span class="badge bg-info fs-6">Member</span>
+                    {% endif %}
+                </p>
+                <p><strong>Private:</strong> 
+                    {% if channel.is_private %}
+                        <span class="badge bg-warning">Yes</span>
+                    {% else %}
+                        <span class="badge bg-success">Public</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-list me-2"></i>Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'channels_app:webinar_list' channel.slug %}" class="btn btn-outline-primary w-100 mb-2">
+                    <i class="fas fa-video me-1"></i>All Webinars
+                </a>
+                <a href="{% url 'channels_app:chat_room' channel.slug %}" class="btn btn-outline-info w-100 mb-2">
+                    <i class="fas fa-comments me-1"></i>Chat Room
+                </a>
+                <a href="{% url 'channels_app:request_list' channel.slug %}" class="btn btn-outline-warning w-100">
+                    <i class="fas fa-clipboard-list me-1"></i>Requests
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

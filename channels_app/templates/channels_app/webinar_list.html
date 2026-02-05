@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between mb-4">
+    <h2>Webinars - {{ channel.name }}</h2>
+    {% if is_admin %}
+    <a href="{% url 'channels_app:webinar_create' channel.slug %}" class="btn btn-success">
+        <i class="fas fa-plus"></i> New
+    </a>
+    {% endif %}
+</div>
+
+<div class="row">
+    {% for webinar in webinars %}
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h6>{{ webinar.title }}</h6>
+                <p class="small">{{ webinar.description|truncatewords:15 }}</p>
+                <span class="badge bg-primary">{{ webinar.status }}</span>
+                <p class="small mt-2">{{ webinar.scheduled_at|date:"M d, H:i" }}</p>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center">
+        <p>No webinars</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
