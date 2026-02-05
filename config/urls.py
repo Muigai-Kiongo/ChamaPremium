@@ -4,9 +4,10 @@ from lending import views as lending_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('channels_app.urls')),
+    path('channels', include('channels_app.urls')),
     path('lending/', include('lending.urls')),
     path('wallet/', include('wallet.urls')),
+    path('', include('user.urls')),
     # Add auth URLs so /accounts/login/ works
     path('accounts/', include('django.contrib.auth.urls')),
     path('notifications/', include('channels_app.urls', namespace='channels_app')),

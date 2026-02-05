@@ -464,8 +464,13 @@
         <a href="/" class="sidebar-brand">
             <div class="sidebar-logo">💰</div>
             <div class="sidebar-title">
+<<<<<<< HEAD
                 <h1>Chama Premium</h1>
                 <p>Together we grow</p>
+=======
+                <h1>ChamaPremium</h1>
+                <p>Together We Grow</p>
+>>>>>>> 1531a8b6951b2a019da4c9c9b7705bf04a21370f
             </div>
         </a>
     </div>
@@ -493,18 +498,16 @@
     </a>
 
         <div class="nav-section-title">Account</div>
-        <a href="#profile" class="sidebar-link">
+        <a href="{% url 'user:profile-details' %}" class="sidebar-link">
             <span>👤</span><span>Profile</span>
         </a>
     </nav>
 
     <div class="sidebar-footer">
         <div class="user-profile">
-            <div class="user-avatar">JD</div>
-            <div class="user-info">
-                <h4>John Doe</h4>
-                <p>Member</p>
-            </div>
+                <button class="hdr-user-avatar">
+                    <a href="{% url 'user:logout'%}">Logout</a>
+                </button>
         </div>
     </div>
 </aside>
@@ -544,7 +547,7 @@
                 <h1>{% block page_title %}Dashboard{% endblock %}</h1>
                 <div class="hdr-sub">
                     <span class="dot"></span>
-                    <span>{% block header_subtitle %}Welcome back, John{% endblock %}</span>
+                    <span>{% block header_subtitle %}Welcome back, {{user.get_full_name|default:user.username}}{% endblock %}</span>
                 </div>
             </div>
         </div>
@@ -563,7 +566,7 @@
                     </svg>
                 </div>
                 <div class="hdr-bal-text">
-                    <span class="hdr-bal-amount">KSh 84,500</span>
+                    <span class="hdr-bal-amount">{{wallet.balance}}</span>
                     <span class="hdr-bal-label">Wallet Balance</span>
                 </div>
             </div>
@@ -591,8 +594,8 @@
 
             <!-- User -->
             <div class="hdr-user">
-                <div class="hdr-user-avatar">JD</div>
-                <span class="hdr-user-name">John</span>
+                <div class="hdr-user-avatar">{{user.first_name.0|upper}}{{user.last_name.0|upper}}</div>
+                <span class="hdr-user-name">{{ user.get_full_name|default:user.username }}</span>
                 <span class="hdr-user-caret">
                     <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
                 </span>
