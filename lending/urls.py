@@ -4,7 +4,7 @@ from . import views
 app_name = 'lending'
 
 urlpatterns = [
-    path('', views.check_eligibility_view, name='check_eligibility'),
+    path('check-eligibility', views.check_eligibility_view, name='check_eligibility'),
     path('loan/' , views.loan_view, name='loan'),
     path('apply/', views.apply_loan_view, name='apply_loan'),
     path('my-loans', views.my_loans_view, name='my_loans'),

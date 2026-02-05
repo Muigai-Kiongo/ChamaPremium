@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'lending',
     'wallet',
+    'user',
         # 3rd party
     'crispy_forms',
     'crispy_bootstrap5',
@@ -61,6 +62,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'wallet.context_processors.wallet_context', 
             ],
         },
     },

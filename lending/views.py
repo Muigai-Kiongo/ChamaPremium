@@ -13,11 +13,83 @@ from .models import (
     Loan, LoanRepayment, TableBankingLoan, TableBankingRound, Contribution
 )
 
+
+from django.db.models import Sum, Count, Q
+from datetime import datetime, timedelta
+
 def loan_view(request):
     return render(request, 'lending/loan.html')
 
+
+
+
 def dashboard_view(request):
-    return render(request, 'lending/dashboard.html')
+    user = request.user
+    
+    # Get or create member profile
+    try:
+        member_profile = user.member_profile
+    except MemberProfile.DoesNotExist:
+        member_profile = MemberProfile.objects.create(
+            user=user,
+            member_since=user.date_joined.date()
+        )
+    
+    # Get active loans
+    active_loans = Loan.objects.filter(
+        borrower=user,
+        status='active'
+    )
+    print(f"this are the active loans {active_loans}")
+    # Get recent loan repayments (last 5)
+    recent_payments = LoanRepayment.objects.filter(
+        loan__borrower=user
+    ).select_related('loan').order_by('-payment_date')[:5]
+    
+    # Get recent contributions (last 5)
+    recent_contributions = Contribution.objects.filter(
+        user=user
+    ).order_by('-payment_date')[:5]
+    
+    # Get pending loan applications
+    pending_applications = LoanApplication.objects.filter(
+        applicant=user,
+        status='pending'
+    ).count()
+    
+    # Calculate total loan balance
+    total_loan_balance = active_loans.aggregate(
+        total=Sum('balance_remaining')
+    )['total'] or 0
+    
+    # Calculate total contributions
+    total_contributions = member_profile.total_contributions
+    
+    # Get upcoming payment (next due date)
+    upcoming_payment = active_loans.filter(
+        next_due_date__isnull=False
+    ).order_by('next_due_date').first()
+    
+    # Calculate wallet balance (if you have a wallet model)
+    try:
+        wallet_balance = user.wallet.balance
+    except:
+        wallet_balance = 0
+    
+        # Stats for dashboard cards
+    context = {
+        'member_profile': member_profile,
+        'active_loans': active_loans,
+        'recent_payments': recent_payments,
+        'recent_contributions': recent_contributions,
+        'upcoming_payment': upcoming_payment,
+        'wallet_balance': wallet_balance,
+        'active_loan_count': active_loans.count(),
+        'total_contributions': total_contributions,
+        'credit_score': member_profile.credit_score,
+    }
+    
+    return render(request, 'lending/dashboard.html', context)
 
 def check_eligibility_view(request):
     if request.method == 'POST':
