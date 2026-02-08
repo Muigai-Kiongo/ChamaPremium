@@ -1,36 +1,57 @@
 {% extends "admin/change_form.html" %}
-{% load i18n admin_urls static admin_modify %}
+{% load i18n admin_urls static %}
+
+{% block content_title %}{% endblock %}
 
 {% block form_top %}
-<div class="alert alert-info">
-    <h5><i class="fab fa-google-meet"></i> Auto-Generate Meet Link</h5>
-    <p>
-        <a href="https://meet.google.com/new" 
-           target="_blank" 
-           class="btn btn-success btn-lg px-4 shadow-sm">
-            GENERATE MEETING NOW
-            </button>
-        </a>
-        <small class="d-block text-muted mt-2">
-            Click → New tab opens → Copy meet link → Paste below
-        </small>
-    </p>
+<div class="alert alert-success border-0 shadow-sm mb-4">
+    <div class="d-flex align-items-center">
+        <i class="fab fa-google-meet fa-2x me-3 text-danger"></i>
+        <div>
+            <h5 class="mb-1">Auto-Generate Google Meet Link</h5>
+            <p class="mb-2">
+                <a href="https://meet.google.com/new" target="_blank" rel="noopener" 
+                   class="btn btn-success btn-lg px-4">
+                    <i class="fas fa-magic me-2"></i>GENERATE MEETING NOW
+                </a>
+            </p>
+            <small class="text-muted fw-semibold">
+                1-CLICK → NEW TAB → COPY LINK → PASTE IN THE FIELD TITLED GOOGLE MEET LINK
+            </small>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
+{% block inline_field_sets %}{% endblock %}
+
 {% block after_field_sets %}
+<style>
+input[name="google_meet_link"] {
+    transition: all 0.3s ease;
+}
+input[name="google_meet_link"]:valid {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 0.2rem rgba(40,167,74,.25) !important;
+    background: #d4edda !important;
+}
+</style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const linkField = document.querySelector('input[name="google_meet_link"]');
     if (linkField) {
         linkField.onpaste = function() {
             setTimeout(() => {
-                if (this.value.includes('meet.google.com/')) {
-                    this.style.borderColor = 'green';
-                    this.style.backgroundColor = '#d4edda';
+                const value = this.value.trim();
+                if (value.includes('meet.google.com/')) {
+                    this.style.border = '3px solid #28a745';
+                    this.style.background = '#d4edda';
+                    this.parentElement.insertAdjacentHTML('beforeend', 
+                        '<span class="badge bg-success ms-2">Valid Meet Link!</span>');
                 }
-            }, 100);
+            }, 300);
         };
+        linkField.focus();
     }
 });
 </script>

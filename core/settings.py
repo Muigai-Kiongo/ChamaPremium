@@ -38,19 +38,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'chama_ai.apps.ChamaAiConfig',
+    'chama_ai',
     
+
     # 3rd party
     'crispy_forms',
     'crispy_bootstrap5',
     
-    # Local apps
-    'users',
+    # Local
     'channels_app',
     
-    
-    # Channels must be last
-    'channels',
+
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+
+{% block title %}Withdraw{% endblock %}
+
+{% block header_icon %}
+<svg viewBox="0 0 24 24">
+    <path d="M12 19V5"/>
+    <path d="M5 12h14"/>
+</svg>
+{% endblock %}
+
+{% block page_title %}Withdraw{% endblock %}
+{% block header_subtitle %}Cash out to M-Pesa{% endblock %}
+
+{% block content %}
+<style>
+    /* ─── LAYOUT ─── */
+    .deposit-wrap {
+        max-width: 520px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        animation: fadeUp 0.4s cubic-bezier(.22,1,.36,1) both;
+    }
+
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── MINI BALANCE CARD ─── */
+    .mini-balance {
+        background: var(--header-dark);
+        border-radius: 16px;
+        padding: 1.4rem 1.6rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 6px 28px rgba(13,26,19,0.24);
+    }
+    .mini-balance .mb-bg { position: absolute; inset: 0; pointer-events: none; }
+    .mini-balance .mb-arc {
+        position: absolute; border-radius: 50%;
+        border: 1px solid rgba(199,53,53,0.15);
+    }
+    .mb-arc-1 { width: 160px; height: 160px; top: -70px; right: -40px; }
+    .mb-arc-2 { width: 220px; height: 220px; top: -100px; right: -70px; border-color: rgba(199,53,53,0.07) !important; }
+    /* Red glow — signals outgoing money */
+    .mini-balance .mb-glow {
+        position: absolute; top: -16px; right: -30px;
+        width: 160px; height: 100px;
+        background: radial-gradient(ellipse, rgba(199,53,53,0.16) 0%, transparent 70%);
+        filter: blur(16px);
+    }
+
+    .mini-balance .mb-inner {
+        position: relative; z-index: 2;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .mb-left { display: flex; flex-direction: column; gap: 2px; }
+    .mb-label {
+        font-size: 0.6rem; font-weight: 600;
+        color: rgba(255,255,255,0.35);
+        text-transform: uppercase; letter-spacing: 0.9px;
+    }
+    .mb-amount {
+        font-size: 1.55rem; font-weight: 800;
+        color: #fff; letter-spacing: -0.8px;
+        font-variant-numeric: tabular-nums;
+    }
+    .mb-currency {
+        font-size: 0.78rem; font-weight: 600;
+        color: rgba(255,255,255,0.4); margin-right: 3px;
+    }
+    .mb-available {
+        font-size: 0.62rem; font-weight: 500;
+        color: rgba(255,255,255,0.28);
+        margin-top: 2px; letter-spacing: 0.3px;
+    }
+
+    /* Red badge */
+    .mb-badge {
+        display: flex; align-items: center; gap: 0.35rem;
+        background: rgba(199,53,53,0.12);
+        border: 1px solid rgba(199,53,53,0.22);
+        border-radius: 20px; padding: 4px 9px;
+        font-size: 0.66rem; font-weight: 600;
+        color: #e05555;
+    }
+    .mb-badge svg {
+        width: 9px; height: 9px;
+        stroke: currentColor; fill: none;
+        stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    /* ─── FORM CARD ─── */
+    .form-card {
+        background: var(--card-white);
+        border: 1.5px solid var(--border-subtle);
+        border-radius: 16px;
+        padding: 1.8rem 1.6rem 1.6rem;
+    }
+
+    /* ─── DJANGO MESSAGES ─── */
+    .msg-alert {
+        display: flex; align-items: flex-start; gap: 0.7rem;
+        border-radius: 10px; padding: 0.75rem 0.9rem;
+        margin-bottom: 1.2rem;
+        font-size: 0.8rem; font-weight: 500; line-height: 1.45;
+    }
+    .msg-alert.success { background: rgba(76,175,122,0.08); border: 1px solid rgba(76,175,122,0.22); color: #1e6b3e; }
+    .msg-alert.error   { background: rgba(199,53,53,0.07);  border: 1px solid rgba(199,53,53,0.2);   color: #9e2828; }
+    .msg-alert.warning { background: rgba(244,180,0,0.08);  border: 1px solid rgba(244,180,0,0.25);  color: #8a6d00; }
+    .msg-alert.info    { background: rgba(11,60,93,0.07);   border: 1px solid rgba(11,60,93,0.18);   color: var(--secondary-blue); }
+    .msg-icon {
+        width: 20px; height: 20px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; font-size: 0.7rem;
+    }
+    .msg-alert.success .msg-icon { background: rgba(76,175,122,0.15); color: #1e6b3e; }
+    .msg-alert.error   .msg-icon { background: rgba(199,53,53,0.13);  color: #9e2828; }
+    .msg-alert.warning .msg-icon { background: rgba(244,180,0,0.15);  color: #8a6d00; }
+    .msg-alert.info    .msg-icon { background: rgba(11,60,93,0.12);   color: var(--secondary-blue); }
+
+    /* ─── FORM FIELDS ─── */
+    .field-group { margin-bottom: 1.25rem; }
+    .field-label {
+        display: block;
+        font-size: 0.78rem; font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 0.45rem; letter-spacing: 0.1px;
+    }
+    .field-input-wrap { position: relative; }
+
+    .field-input-wrap .fi-icon {
+        position: absolute;
+        left: 14px; top: 50%; transform: translateY(-50%);
+        width: 18px; height: 18px;
+        stroke: var(--text-light); fill: none;
+        stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        pointer-events: none;
+        transition: stroke 0.2s;
+    }
+    /* Red icon on focus */
+    .field-input-wrap.focused .fi-icon { stroke: #c73535; }
+
+    .field-input {
+        width: 100%;
+        padding: 0.72rem 0.9rem 0.72rem 2.6rem;
+        border: 1.5px solid var(--border-subtle);
+        border-radius: 10px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.88rem; font-weight: 500;
+        color: var(--text-dark);
+        background: #f9fafb;
+        outline: none;
+        transition: all 0.2s ease;
+        -webkit-appearance: none;
+    }
+    .field-input::placeholder { color: var(--text-light); font-weight: 400; }
+    /* Red focus ring */
+    .field-input:focus {
+        border-color: #c73535;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(199,53,53,0.1);
+    }
+    .field-input.is-invalid {
+        border-color: #c73535;
+        background: rgba(199,53,53,0.03);
+    }
+    .field-input.is-invalid:focus { box-shadow: 0 0 0 3px rgba(199,53,53,0.12); }
+
+    .field-error {
+        margin-top: 0.35rem;
+        font-size: 0.7rem; font-weight: 500;
+        color: #c73535;
+    }
+    .field-hint {
+        margin-top: 0.35rem;
+        font-size: 0.68rem; font-weight: 500;
+        color: var(--text-light);
+    }
+
+    /* ─── RED SUBMIT BUTTON ─── */
+    .btn-withdraw {
+        display: flex; align-items: center; justify-content: center; gap: 0.55rem;
+        width: 100%;
+        padding: 0.78rem 1rem;
+        background: linear-gradient(135deg, #c73535, #a82e2e);
+        border: none;
+        border-radius: 11px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.9rem; font-weight: 700;
+        color: #fff; cursor: pointer;
+        letter-spacing: 0.1px;
+        transition: all 0.22s ease;
+        box-shadow: 0 4px 16px rgba(199,53,53,0.3);
+        margin-top: 0.4rem;
+    }
+    .btn-withdraw svg {
+        width: 17px; height: 17px;
+        stroke: #fff; fill: none;
+        stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .btn-withdraw:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 22px rgba(199,53,53,0.38);
+    }
+    .btn-withdraw:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(199,53,53,0.25); }
+
+    /* ─── BACK BUTTON ─── */
+    .btn-back {
+        display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+        width: 100%;
+        padding: 0.68rem 1rem;
+        background: transparent;
+        border: 1.5px solid var(--border-subtle);
+        border-radius: 11px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.82rem; font-weight: 600;
+        color: var(--text-light);
+        text-decoration: none; cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 0.6rem;
+    }
+    .btn-back svg {
+        width: 14px; height: 14px;
+        stroke: currentColor; fill: none;
+        stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .btn-back:hover {
+        border-color: #c73535;
+        color: #c73535;
+        background: rgba(199,53,53,0.04);
+    }
+</style>
+
+<div class="deposit-wrap">
+
+    <!-- ─── MINI BALANCE ─── -->
+    <div class="mini-balance">
+        <div class="mb-bg">
+            <div class="mb-arc mb-arc-1"></div>
+            <div class="mb-arc mb-arc-2"></div>
+            <div class="mb-glow"></div>
+        </div>
+        <div class="mb-inner">
+            <div class="mb-left">
+                <span class="mb-label">Available Balance</span>
+                <span class="mb-amount"><span class="mb-currency">KES</span>{{ wallet.balance|floatformat:2 }}</span>
+                <span class="mb-available">Max you can withdraw</span>
+            </div>
+            <div class="mb-badge">
+                <!-- Down arrow -->
+                <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>
+                Out
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── FORM CARD ─── -->
+    <div class="form-card">
+
+        <!-- Django messages -->
+        {% if messages %}
+            {% for message in messages %}
+            <div class="msg-alert {{ message.tags }}">
+                <div class="msg-icon">
+                    {% if message.tags == 'success' %}✓
+                    {% elif message.tags == 'error' %}✕
+                    {% elif message.tags == 'warning' %}!
+                    {% else %}i{% endif %}
+                </div>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- Amount -->
+            <div class="field-group">
+                <label class="field-label" for="id_amount">{{ form.amount.label }}</label>
+                <div class="field-input-wrap" id="wrap-amount">
+                    <svg class="fi-icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v12M8 9h6.5a2 2 0 0 1 0 4H9.5a2 2 0 0 0 0 4H16"/>
+                    </svg>
+                    <input type="text"
+                           name="amount"
+                           id="id_amount"
+                           class="field-input {% if form.amount.errors %}is-invalid{% endif %}"
+                           value="{{ form.amount.value|default_if_none:'' }}"
+                           placeholder="e.g. 5000"
+                           oninput="toggleFocus(this)"
+                           onblur="toggleFocus(this)">
+                </div>
+                {% if form.amount.errors %}
+                    <div class="field-error">{{ form.amount.errors|first }}</div>
+                {% else %}
+                    <div class="field-hint">Available: KES {{ wallet.balance|floatformat:2 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Phone Number -->
+            <div class="field-group">
+                <label class="field-label" for="id_phone_number">{{ form.phone_number.label }}</label>
+                <div class="field-input-wrap" id="wrap-phone">
+                    <svg class="fi-icon" viewBox="0 0 24 24">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    <input type="text"
+                           name="phone_number"
+                           id="id_phone_number"
+                           class="field-input {% if form.phone_number.errors %}is-invalid{% endif %}"
+                           value="{{ form.phone_number.value|default_if_none:'' }}"
+                           placeholder="254XXXXXXXXX"
+                           oninput="toggleFocus(this)"
+                           onblur="toggleFocus(this)">
+                </div>
+                {% if form.phone_number.errors %}
+                    <div class="field-error">{{ form.phone_number.errors|first }}</div>
+                {% else %}
+                    <div class="field-hint">M-Pesa number in format: 254XXXXXXXXX</div>
+                {% endif %}
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn-withdraw">
+                <!-- Down arrow out icon -->
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 19V5"/>
+                    <path d="M19 12l-7 7-7-7"/>
+                </svg>
+                Withdraw to M-Pesa
+            </button>
+        </form>
+
+        <!-- Back link -->
+        <a href="{% url 'wallet:wallet_dashboard' %}" class="btn-back">
+            <svg viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+            Back to Wallet
+        </a>
+    </div>
+
+</div>
+
+<script>
+    function toggleFocus(input) {
+        const wrap = input.closest('.field-input-wrap');
+        if (document.activeElement === input || input.value.trim() !== '') {
+            wrap.classList.add('focused');
+        } else {
+            wrap.classList.remove('focused');
+        }
+    }
+    document.querySelectorAll('.field-input').forEach(toggleFocus);
+</script>
+{% endblock %}

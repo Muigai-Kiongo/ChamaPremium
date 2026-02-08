@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notifications - Chama Premium{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/notifications.css' %}">
+<style>
+    
+    .notifications-header-title {
+        color: var(--primary-green-dark) !important;
+        font-weight: 800;
+    }
+    
+    .btn-chama-green {
+        background-color: var(--primary-green-dark) !important;
+        color: #ffffff !important;
+        border: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-chama-green:hover {
+        background-color: var(--primary-green) !important;
+        transform: translateY(-1px);
+        color: #ffffff !important;
+    }
+
+    .notification-item.unread {
+        border-left: 4px solid var(--accent-gold);
+        background-color: rgba(31, 122, 77, 0.05);
+    }
+
+    .notification-title {
+        color: var(--secondary-blue);
+        font-weight: 700;
+    }
+
+    .delete-icon {
+        color: #dc3545;
+        opacity: 0.5;
+        transition: opacity 0.2s;
+    }
+
+    .delete-icon:hover {
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="notifications-header-title mb-0">
+                    <i class="fas fa-bell me-2"></i>
+                    Notifications 
+                    {% if unread_count > 0 %}
+                        <span class="badge bg-danger rounded-pill">{{ unread_count }}</span>
+                    {% endif %}
+                </h2>
+                
+                <div class="d-flex gap-2">
+                    {% if unread_count > 0 %}
+                        <a href="{% url 'channels_app:mark_all_read' %}" class="btn btn-outline-secondary fw-600" style="border-radius: 8px;">
+                            <i class="fas fa-check-double me-1"></i> Mark all as read
+                        </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'lending:dashboard' %}" class="btn btn-chama-green">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+
+            {% if notifications %}
+                <div class="notifications-list card shadow-sm border-0 rounded-4 overflow-hidden">
+                    {% for notification in notifications %}
+                        <div class="notification-item p-3 border-bottom {% if not notification.is_read %}unread{% endif %}">
+                            <div class="d-flex align-items-center">
+                                <div class="notification-icon me-3" style="color: var(--primary-green); font-size: 1.2rem;">
+                                    {% if notification.notification_type == 'webinar' %}
+                                        <i class="fas fa-video"></i>
+                                    {% elif notification.notification_type == 'payment' %}
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    {% else %}
+                                        <i class="fas fa-info-circle"></i>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="notification-content flex-grow-1">
+                                    <h6 class="notification-title mb-1">{{ notification.title }}</h6>
+                                    <p class="notification-message text-dark mb-1">{{ notification.message }}</p>
+                                    <span class="notification-time text-muted small">
+                                        <i class="far fa-clock me-1"></i>{{ notification.created_at|timesince }} ago
+                                    </span>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-3">
+                                    {% if not notification.is_read %}
+                                        <div class="mark-read text-warning" title="Unread">
+                                            <i class="fas fa-circle" style="font-size: 0.7rem;"></i>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <a href="{% url 'channels_app:delete_notification' notification.pk %}" 
+                                       class="delete-icon" 
+                                       title="Delete Notification"
+                                       onclick="return confirm('Delete this notification?')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state text-center py-5">
+                    <i class="fas fa-bell-slash fa-3x mb-3" style="color: #dee2e6;"></i>
+                    <h5 style="color: var(--primary-green-dark);">No notifications yet</h5>
+                    <p class="text-muted">You'll see updates here when there are new notifications.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
