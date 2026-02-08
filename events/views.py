@@ -6,7 +6,7 @@ from .forms import EventForm, EventImageForm
 
 # Utility function to check if user is admin
 def is_admin(user):
-    return user.is_staff  # assuming admin users have is_staff=True
+    return user.is_staff  # assuming admin user have is_staff=True
 
 # List of events - everyone can view
 @login_required

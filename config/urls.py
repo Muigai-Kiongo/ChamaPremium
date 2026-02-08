@@ -4,7 +4,6 @@ from lending import views as lending_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('channels', include('channels_app.urls')),
     path('lending/', include('lending.urls')),
     path('wallet/', include('wallet.urls')),
     path('', include('user.urls')),
