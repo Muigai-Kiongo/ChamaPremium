@@ -10,4 +10,5 @@ urlpatterns = [
     # Add auth URLs so /accounts/login/ works
     path('accounts/', include('django.contrib.auth.urls')),
     path('notifications/', include('channels_app.urls', namespace='channels_app')),
+    path('events/', include('events.urls')),
 ]

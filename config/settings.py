@@ -30,6 +30,8 @@ INSTALLED_APPS = [
     'lending',
     'wallet',
     'user',
+    'events',
+    'chama_ai',
         # 3rd party
     'crispy_forms',
     'crispy_bootstrap5',

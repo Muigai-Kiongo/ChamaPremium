@@ -492,7 +492,12 @@
             </span>
         {% endif %}
     </a>
-
+    
+       <a href="{% url 'events:event_list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'events' %}active{% endif %}">
+    <span>📅</span><span>Events</span>
+</a>
+    </a>
+</li>
         <div class="nav-section-title">Account</div>
         <a href="{% url 'user:profile-details' %}" class="sidebar-link">
             <span>👤</span><span>Profile</span>
