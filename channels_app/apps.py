@@ -7,7 +7,5 @@ class ChannelsAppConfig(AppConfig):
 
     def ready(self):
         
-            
-            # import channels_app.signals
+        import channels_app.signals
         
-        pass

@@ -1,0 +1,549 @@
+{% extends 'base.html' %}
+
+{% block title %}Transaction History{% endblock %}
+
+{% block header_icon %}
+<svg viewBox="0 0 24 24">
+    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+</svg>
+{% endblock %}
+
+{% block page_title %}Transactions{% endblock %}
+{% block header_subtitle %}Your complete activity log{% endblock %}
+
+{% block content %}
+<style>
+    /* ─── LAYOUT ─── */
+    .txn-wrap {
+        max-width: 900px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        animation: fadeUp 0.4s cubic-bezier(.22,1,.36,1) both;
+    }
+
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── MINI BALANCE CARD ─── */
+    .mini-balance {
+        background: var(--header-dark);
+        border-radius: 16px;
+        padding: 1.4rem 1.6rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 6px 28px rgba(13,26,19,0.24);
+    }
+    .mini-balance .mb-bg { position: absolute; inset: 0; pointer-events: none; }
+    .mini-balance .mb-arc {
+        position: absolute; border-radius: 50%;
+        border: 1px solid rgba(31,122,77,0.13);
+    }
+    .mb-arc-1 { width: 160px; height: 160px; top: -70px; right: -40px; }
+    .mb-arc-2 { width: 220px; height: 220px; top: -100px; right: -70px; border-color: rgba(31,122,77,0.06) !important; }
+    .mini-balance .mb-glow {
+        position: absolute; top: -16px; right: -30px;
+        width: 160px; height: 100px;
+        background: radial-gradient(ellipse, rgba(31,122,77,0.16) 0%, transparent 70%);
+        filter: blur(16px);
+    }
+    .mini-balance .mb-inner {
+        position: relative; z-index: 2;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .mb-left { display: flex; flex-direction: column; gap: 2px; }
+    .mb-label {
+        font-size: 0.6rem; font-weight: 600;
+        color: rgba(255,255,255,0.35);
+        text-transform: uppercase; letter-spacing: 0.9px;
+    }
+    .mb-amount {
+        font-size: 1.55rem; font-weight: 800;
+        color: #fff; letter-spacing: -0.8px;
+        font-variant-numeric: tabular-nums;
+    }
+    .mb-currency {
+        font-size: 0.78rem; font-weight: 600;
+        color: rgba(255,255,255,0.4); margin-right: 3px;
+    }
+    .mb-badge {
+        display: flex; align-items: center; gap: 0.35rem;
+        background: rgba(76,175,122,0.12);
+        border: 1px solid rgba(76,175,122,0.2);
+        border-radius: 20px; padding: 4px 9px;
+        font-size: 0.66rem; font-weight: 600; color: #4caf7a;
+    }
+    .mb-badge svg {
+        width: 9px; height: 9px;
+        stroke: currentColor; fill: none;
+        stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    /* ─── FILTER CARD ─── */
+    .filter-card {
+        background: var(--card-white);
+        border: 1.5px solid var(--border-subtle);
+        border-radius: 16px;
+        padding: 1.4rem 1.6rem;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .filter-group { display: flex; flex-direction: column; gap: 0.4rem; }
+
+    .filter-label {
+        font-size: 0.7rem; font-weight: 600;
+        color: var(--text-light);
+        text-transform: uppercase; letter-spacing: 0.7px;
+    }
+
+    .filter-select {
+        width: 100%;
+        padding: 0.6rem 2rem 0.6rem 0.75rem;
+        border: 1.5px solid var(--border-subtle);
+        border-radius: 9px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--text-dark);
+        background-color: #f9fafb;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236C757D' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        -webkit-appearance: none;
+        appearance: none;
+        outline: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .filter-select:focus {
+        border-color: var(--secondary-blue);
+        background-color: #fff;
+        box-shadow: 0 0 0 3px rgba(11,60,93,0.1);
+    }
+
+    .filter-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .btn-filter {
+        display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+        padding: 0.58rem 1.2rem;
+        background: linear-gradient(135deg, var(--secondary-blue), #0a3350);
+        border: none;
+        border-radius: 9px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.8rem; font-weight: 700;
+        color: #fff; cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 3px 12px rgba(11,60,93,0.28);
+    }
+    .btn-filter svg {
+        width: 14px; height: 14px;
+        stroke: #fff; fill: none;
+        stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .btn-filter:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 18px rgba(11,60,93,0.35);
+    }
+    .btn-filter:active { transform: translateY(0); }
+
+    .btn-reset {
+        padding: 0.58rem 0.9rem;
+        background: transparent;
+        border: 1.5px solid var(--border-subtle);
+        border-radius: 9px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.78rem; font-weight: 600;
+        color: var(--text-light); cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .btn-reset:hover {
+        border-color: var(--text-light);
+        color: var(--text-dark);
+    }
+
+    /* ─── DJANGO MESSAGES ─── */
+    .msg-alert {
+        display: flex; align-items: flex-start; gap: 0.7rem;
+        border-radius: 10px; padding: 0.75rem 0.9rem;
+        margin-bottom: 1rem;
+        font-size: 0.8rem; font-weight: 500; line-height: 1.45;
+    }
+    .msg-alert.success { background: rgba(76,175,122,0.08); border: 1px solid rgba(76,175,122,0.22); color: #1e6b3e; }
+    .msg-alert.error   { background: rgba(199,53,53,0.07);  border: 1px solid rgba(199,53,53,0.2);   color: #9e2828; }
+    .msg-alert.warning { background: rgba(244,180,0,0.08);  border: 1px solid rgba(244,180,0,0.25);  color: #8a6d00; }
+    .msg-alert.info    { background: rgba(11,60,93,0.07);   border: 1px solid rgba(11,60,93,0.18);   color: var(--secondary-blue); }
+    .msg-icon {
+        width: 20px; height: 20px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; font-size: 0.7rem;
+    }
+    .msg-alert.success .msg-icon { background: rgba(76,175,122,0.15); color: #1e6b3e; }
+    .msg-alert.error   .msg-icon { background: rgba(199,53,53,0.13);  color: #9e2828; }
+    .msg-alert.warning .msg-icon { background: rgba(244,180,0,0.15);  color: #8a6d00; }
+    .msg-alert.info    .msg-icon { background: rgba(11,60,93,0.12);   color: var(--secondary-blue); }
+
+    /* ─── TABLE CARD ─── */
+    .table-card {
+        background: var(--card-white);
+        border: 1.5px solid var(--border-subtle);
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+    /* Table header */
+    .txn-thead {
+        display: grid;
+        grid-template-columns: 140px 1fr 110px 1fr 100px;
+        gap: 0;
+        padding: 0.85rem 1.2rem;
+        background: #f4f6f8;
+        border-bottom: 1.5px solid var(--border-subtle);
+    }
+    .txn-thead span {
+        font-size: 0.67rem; font-weight: 700;
+        color: var(--text-light);
+        text-transform: uppercase; letter-spacing: 0.8px;
+    }
+
+    /* Table body */
+    .txn-tbody { display: flex; flex-direction: column; }
+
+    .txn-row {
+        display: grid;
+        grid-template-columns: 140px 1fr 110px 1fr 100px;
+        gap: 0;
+        padding: 0.9rem 1.2rem;
+        border-bottom: 1px solid var(--border-subtle);
+        transition: background 0.18s ease;
+        animation: rowIn 0.35s cubic-bezier(.22,1,.36,1) both;
+    }
+    .txn-row:last-child { border-bottom: none; }
+    .txn-row:hover { background: rgba(31,122,77,0.03); }
+
+    /* Staggered row animations */
+    .txn-row:nth-child(1)  { animation-delay: 0.06s; }
+    .txn-row:nth-child(2)  { animation-delay: 0.1s; }
+    .txn-row:nth-child(3)  { animation-delay: 0.14s; }
+    .txn-row:nth-child(4)  { animation-delay: 0.18s; }
+    .txn-row:nth-child(5)  { animation-delay: 0.22s; }
+    .txn-row:nth-child(6)  { animation-delay: 0.26s; }
+    .txn-row:nth-child(7)  { animation-delay: 0.3s; }
+    .txn-row:nth-child(8)  { animation-delay: 0.34s; }
+    .txn-row:nth-child(9)  { animation-delay: 0.38s; }
+    .txn-row:nth-child(10) { animation-delay: 0.42s; }
+
+    @keyframes rowIn {
+        from { opacity: 0; transform: translateX(-8px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Cell text */
+    .txn-date {
+        font-size: 0.78rem; font-weight: 500;
+        color: var(--text-dark);
+        display: flex; flex-direction: column; gap: 1px;
+    }
+    .txn-date .date-time {
+        font-size: 0.65rem; font-weight: 400;
+        color: var(--text-light);
+    }
+
+    .txn-amount {
+        font-size: 0.82rem; font-weight: 700;
+        color: var(--text-dark);
+        font-variant-numeric: tabular-nums;
+    }
+    .txn-amount.in  { color: var(--primary-green); }
+    .txn-amount.out { color: #c73535; }
+
+    .txn-desc {
+        font-size: 0.78rem; font-weight: 400;
+        color: var(--text-light);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        padding-right: 0.5rem;
+    }
+
+    /* ─── BADGES ─── */
+    .badge {
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        font-size: 0.67rem; font-weight: 600;
+        border-radius: 20px; padding: 3px 8px;
+        letter-spacing: 0.2px;
+    }
+    .badge .badge-dot {
+        width: 5px; height: 5px;
+        border-radius: 50%;
+    }
+
+    /* Type badges */
+    .badge.deposit   { background: rgba(31,122,77,0.1);  color: var(--primary-green); }
+    .badge.deposit .badge-dot { background: var(--primary-green); }
+
+    .badge.withdrawal { background: rgba(199,53,53,0.08); color: #c73535; }
+    .badge.withdrawal .badge-dot { background: #c73535; }
+
+    .badge.chama     { background: rgba(244,180,0,0.1);  color: var(--accent-gold-dark); }
+    .badge.chama .badge-dot { background: var(--accent-gold-dark); }
+
+    /* Status badges */
+    .badge.completed { background: rgba(31,122,77,0.1);  color: var(--primary-green); }
+    .badge.completed .badge-dot { background: var(--primary-green); }
+
+    .badge.pending   { background: rgba(244,180,0,0.1);  color: var(--accent-gold-dark); }
+    .badge.pending .badge-dot { background: var(--accent-gold-dark); }
+
+    .badge.failed    { background: rgba(199,53,53,0.08); color: #c73535; }
+    .badge.failed .badge-dot { background: #c73535; }
+
+    /* ─── EMPTY STATE ─── */
+    .txn-empty {
+        padding: 3rem 1.5rem;
+        text-align: center;
+    }
+    .empty-icon {
+        width: 56px; height: 56px;
+        border-radius: 16px;
+        background: rgba(11,60,93,0.06);
+        border: 1.5px solid rgba(11,60,93,0.12);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1rem;
+    }
+    .empty-icon svg {
+        width: 24px; height: 24px;
+        stroke: var(--secondary-blue); fill: none;
+        stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .empty-title {
+        font-size: 0.9rem; font-weight: 700;
+        color: var(--text-dark); margin-bottom: 4px;
+    }
+    .empty-sub {
+        font-size: 0.72rem; font-weight: 500;
+        color: var(--text-light);
+    }
+
+    /* ─── BACK LINK ─── */
+    .btn-back {
+        display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+        width: 100%; max-width: 900px; margin: 0 auto;
+        padding: 0.68rem 1rem;
+        background: transparent;
+        border: 1.5px solid var(--border-subtle);
+        border-radius: 11px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.82rem; font-weight: 600;
+        color: var(--text-light);
+        text-decoration: none; cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-back svg {
+        width: 14px; height: 14px;
+        stroke: currentColor; fill: none;
+        stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .btn-back:hover {
+        border-color: var(--primary-green);
+        color: var(--primary-green);
+        background: rgba(31,122,77,0.04);
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media(max-width:680px){
+        .filter-row { grid-template-columns: 1fr 1fr; }
+        .txn-thead,
+        .txn-row {
+            grid-template-columns: 1fr 80px 90px;
+        }
+        /* Hide date and description on mobile */
+        .txn-thead .col-date,
+        .txn-row .txn-date,
+        .txn-thead .col-desc,
+        .txn-row .txn-desc { display: none; }
+    }
+    @media(max-width:400px){
+        .filter-row { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="txn-wrap">
+
+    <!-- ─── MINI BALANCE ─── -->
+    <div class="mini-balance">
+        <div class="mb-bg">
+            <div class="mb-arc mb-arc-1"></div>
+            <div class="mb-arc mb-arc-2"></div>
+            <div class="mb-glow"></div>
+        </div>
+        <div class="mb-inner">
+            <div class="mb-left">
+                <span class="mb-label">Current Balance</span>
+                <span class="mb-amount"><span class="mb-currency">KES</span>{{ wallet.balance|floatformat:2 }}</span>
+            </div>
+            <div class="mb-badge">
+                <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+                Live
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── DJANGO MESSAGES ─── -->
+    {% if messages %}
+        {% for message in messages %}
+        <div class="msg-alert {{ message.tags }}">
+            <div class="msg-icon">
+                {% if message.tags == 'success' %}✓
+                {% elif message.tags == 'error' %}✕
+                {% elif message.tags == 'warning' %}!
+                {% else %}i{% endif %}
+            </div>
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- ─── FILTER BAR ─── -->
+    <div class="filter-card">
+        <form method="get">
+            <div class="filter-row">
+
+                <div class="filter-group">
+                    <label class="filter-label">{{ form.transaction_type.label }}</label>
+                    <select name="transaction_type" class="filter-select">
+                        {% for value, label in form.transaction_type.field.choices %}
+                            <option value="{{ value }}" {% if form.transaction_type.value == value|stringformat:'s' %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">{{ form.status.label }}</label>
+                    <select name="status" class="filter-select">
+                        {% for value, label in form.status.field.choices %}
+                            <option value="{{ value }}" {% if form.status.value == value|stringformat:'s' %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">{{ form.date_from.label }}</label>
+                    <input type="date"
+                           name="date_from"
+                           class="filter-select"
+                           value="{{ form.date_from.value|default_if_none:'' }}">
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">{{ form.date_to.label }}</label>
+                    <input type="date"
+                           name="date_to"
+                           class="filter-select"
+                           value="{{ form.date_to.value|default_if_none:'' }}">
+                </div>
+
+            </div>
+
+            <div class="filter-actions">
+                <button type="submit" class="btn-filter">
+                    <svg viewBox="0 0 24 24">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                    </svg>
+                    Filter
+                </button>
+                <a href="{% url 'wallet:transaction_history' %}" class="btn-reset">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- ─── TRANSACTION TABLE ─── -->
+    <div class="table-card">
+
+        <!-- Header -->
+        <div class="txn-thead">
+            <span class="col-date">Date</span>
+            <span>Type</span>
+            <span>Amount</span>
+            <span class="col-desc">Description</span>
+            <span>Status</span>
+        </div>
+
+        <!-- Body -->
+        <div class="txn-tbody">
+            {% for transaction in transactions %}
+            <div class="txn-row">
+
+                <!-- Date -->
+                <div class="txn-date col-date">
+                    {{ transaction.created_at|date:"d M Y" }}
+                    <span class="date-time">{{ transaction.created_at|date:"H:i" }}</span>
+                </div>
+
+                <!-- Type -->
+                <div>
+                    {% if transaction.type == 'deposit' %}
+                        <span class="badge deposit"><span class="badge-dot"></span>Deposit</span>
+                    {% elif transaction.type == 'withdrawal' %}
+                        <span class="badge withdrawal"><span class="badge-dot"></span>Withdrawal</span>
+                    {% else %}
+                        <span class="badge chama"><span class="badge-dot"></span>Chama Payment</span>
+                    {% endif %}
+                </div>
+
+                <!-- Amount -->
+                <div class="txn-amount {% if transaction.type == 'deposit' %}in{% else %}out{% endif %}">
+                    {% if transaction.type != 'deposit' %}−{% endif %}KES {{ transaction.amount|floatformat:2 }}
+                </div>
+
+                <!-- Description -->
+                <div class="txn-desc col-desc">{{ transaction.description|default:"—" }}</div>
+
+                <!-- Status -->
+                <div>
+                    {% if transaction.status == 'completed' %}
+                        <span class="badge completed"><span class="badge-dot"></span>Completed</span>
+                    {% elif transaction.status == 'pending' %}
+                        <span class="badge pending"><span class="badge-dot"></span>Pending</span>
+                    {% else %}
+                        <span class="badge failed"><span class="badge-dot"></span>Failed</span>
+                    {% endif %}
+                </div>
+
+            </div>
+            {% empty %}
+
+            <!-- Empty State -->
+            <div class="txn-empty">
+                <div class="empty-icon">
+                    <svg viewBox="0 0 24 24">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                </div>
+                <div class="empty-title">No transactions found</div>
+                <div class="empty-sub">Try adjusting your filters or check back later</div>
+            </div>
+
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ─── BACK ─── -->
+    <a href="{% url 'wallet:wallet_dashboard' %}" class="btn-back">
+        <svg viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        Back to Wallet
+    </a>
+
+</div>
+{% endblock %}

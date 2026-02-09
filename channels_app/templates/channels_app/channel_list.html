@@ -14,7 +14,7 @@
                     <h5 class="card-title">{{ channel.name }}</h5>
                     <p class="card-text">{{ channel.description|truncatewords:20 }}</p>
                     <span class="badge bg-success">
-                        <i class="fas fa-users"></i> {{ channel.memberships.count }} members
+                        <i class="fas fa-user"></i> {{ channel.memberships.count }} members
                     </span>
                 </div>
                 <div class="card-footer">
@@ -27,10 +27,15 @@
         <div class="col-12 text-center py-5">
             <i class="fas fa-users-slash fa-4x text-muted mb-3"></i>
             <h3>No channels yet</h3>
-            <a href="/admin/channels_app/channel/add/" class="btn btn-primary mt-3">
-                Create First Channel
+            {% if user.groups.all.0.name == 'Chama Admins' %}
+            <a href="{% url 'channels_app:channel_create' %}" class="btn btn-primary mt-3">
+                <i class="fas fa-plus me-2"></i>Create First Channel
             </a>
+            {% else %}
+            <p><strong>Only Chama Admins can create channels.</strong></p>
+        <a href="{% url 'login' %}" class="btn btn-outline-primary mt-3">Contact Admin</a>
         </div>
+        {% endif %}
         {% endfor %}
     </div>
 </div>

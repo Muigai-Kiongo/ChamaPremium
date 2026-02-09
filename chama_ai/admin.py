@@ -86,7 +86,7 @@ class AIConversationAdmin(admin.ModelAdmin):
         return obj.response[:30] + "..." if len(obj.response) > 30 else obj.response
     response_preview.short_description = 'AI Response'
 
-# Custom admin site title
+
 admin.site.site_header = "Chama Premium Admin"
 admin.site.site_title = "Chama Premium"
 admin.site.index_title = "Manage Chama Groups & AI Features"

@@ -1,0 +1,606 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Update Profile - ChamaPremium{% endblock %}
+
+{% block header_icon %}
+<!-- Edit profile icon -->
+<svg viewBox="0 0 24 24">
+    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+</svg>
+{% endblock %}
+
+{% block page_title %}Update Profile{% endblock %}
+
+{% block header_subtitle %}Edit your account information{% endblock %}
+
+{% block content %}
+<style>
+    /* Form Container */
+    .update-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    /* Header Section */
+    .update-header {
+        background: var(--card-white);
+        border-radius: 18px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 2px solid var(--border-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .update-header-left {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .update-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 800;
+        color: white;
+        box-shadow: 0 6px 20px rgba(244,180,0,0.3);
+        border: 3px solid rgba(255,255,255,0.5);
+    }
+
+    .update-header-info h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 0.3rem;
+    }
+
+    .update-header-info p {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        font-weight: 500;
+    }
+
+    .cancel-btn {
+        padding: 0.75rem 1.5rem;
+        background: var(--bg-grey);
+        color: var(--text-dark);
+        border: 2px solid var(--border-subtle);
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .cancel-btn:hover {
+        background: var(--card-white);
+        border-color: var(--primary-green);
+        color: var(--primary-green);
+    }
+
+    /* Form Cards */
+    .form-section {
+        background: var(--card-white);
+        border-radius: 18px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 2px solid var(--border-subtle);
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--border-subtle);
+    }
+
+    /* Form Groups */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-label .required {
+        color: #e74c3c;
+        margin-left: 0.2rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border: 2px solid var(--border-subtle);
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--text-dark);
+        background: var(--card-white);
+        transition: all 0.3s;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 3px rgba(31,122,77,0.1);
+    }
+
+    .form-control::placeholder {
+        color: var(--text-light);
+        opacity: 0.6;
+    }
+
+    textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    .form-text {
+        font-size: 0.8rem;
+        color: var(--text-light);
+        margin-top: 0.4rem;
+        display: block;
+    }
+
+    /* Error Messages */
+    .errorlist {
+        list-style: none;
+        padding: 0;
+        margin: 0.5rem 0 0 0;
+    }
+
+    .errorlist li {
+        font-size: 0.85rem;
+        color: #e74c3c;
+        font-weight: 500;
+        padding: 0.4rem 0.8rem;
+        background: rgba(231,76,60,0.1);
+        border-radius: 6px;
+        margin-top: 0.3rem;
+    }
+
+    .form-control.error {
+        border-color: #e74c3c;
+    }
+
+    /* Image Upload */
+    .image-upload-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .current-image {
+        width: 100px;
+        height: 100px;
+        border-radius: 12px;
+        object-fit: cover;
+        border: 3px solid var(--border-subtle);
+    }
+
+    .current-avatar-placeholder {
+        width: 100px;
+        height: 100px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary-green), #267A5A);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: white;
+        border: 3px solid var(--border-subtle);
+    }
+
+    .file-input-wrapper {
+        flex: 1;
+    }
+
+    .file-input {
+        width: 100%;
+    }
+
+    /* Action Buttons */
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 2rem;
+        border-top: 2px solid var(--border-subtle);
+    }
+
+    .btn {
+        padding: 0.9rem 2rem;
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-green), #267A5A);
+        color: white;
+        box-shadow: 0 4px 16px rgba(31,122,77,0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(31,122,77,0.4);
+    }
+
+    .btn-secondary {
+        background: var(--bg-grey);
+        color: var(--text-dark);
+        border: 2px solid var(--border-subtle);
+    }
+
+    .btn-secondary:hover {
+        background: var(--card-white);
+        border-color: var(--text-dark);
+    }
+
+    /* Success Message */
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .alert-success {
+        background: rgba(31,122,77,0.1);
+        color: var(--primary-green);
+        border: 2px solid rgba(31,122,77,0.2);
+    }
+
+    .alert-danger {
+        background: rgba(231,76,60,0.1);
+        color: #e74c3c;
+        border: 2px solid rgba(231,76,60,0.2);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .update-header {
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .update-header-left {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .form-section {
+            padding: 1.5rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .image-upload-wrapper {
+            flex-direction: column;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .update-avatar {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+
+        .update-header-info h2 {
+            font-size: 1.2rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+
+<div class="update-container">
+
+    <!-- Header -->
+    <div class="update-header">
+        <div class="update-header-left">
+            <div class="update-avatar">
+                {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+            </div>
+            <div class="update-header-info">
+                <h2>{{ user.get_full_name|default:user.username }}</h2>
+                <p>Update your personal information and profile details</p>
+            </div>
+        </div>
+        <a href="{% url 'user:profile_details' %}" class="cancel-btn">
+            <span>←</span>
+            <span>Back to Profile</span>
+        </a>
+    </div>
+
+    <!-- Success/Error Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                <span>{% if message.tags == 'success' %}✓{% else %}⚠{% endif %}</span>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Personal Information Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <span>👤</span>
+                <span>Personal Information</span>
+            </h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="id_first_name">
+                        First Name <span class="required">*</span>
+                    </label>
+                    {{ user_form.first_name }}
+                    {% if user_form.first_name.errors %}
+                        <ul class="errorlist">
+                            {% for error in user_form.first_name.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="id_last_name">
+                        Last Name <span class="required">*</span>
+                    </label>
+                    {{ user_form.last_name }}
+                    {% if user_form.last_name.errors %}
+                        <ul class="errorlist">
+                            {% for error in user_form.last_name.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="id_username">
+                        Username <span class="required">*</span>
+                    </label>
+                    {{ user_form.username }}
+                    {% if user_form.username.errors %}
+                        <ul class="errorlist">
+                            {% for error in user_form.username.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    <small class="form-text">Your unique username for login</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="id_email">
+                        Email Address <span class="required">*</span>
+                    </label>
+                    {{ user_form.email }}
+                    {% if user_form.email.errors %}
+                        <ul class="errorlist">
+                            {% for error in user_form.email.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact & Location Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <span>📍</span>
+                <span>Contact & Location</span>
+            </h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="id_phone_number">
+                        Phone Number
+                    </label>
+                    {{ profile_form.phone_number }}
+                    {% if profile_form.phone_number.errors %}
+                        <ul class="errorlist">
+                            {% for error in profile_form.phone_number.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    <small class="form-text">Format: +254 712 345 678</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="id_date_of_birth">
+                        Date of Birth
+                    </label>
+                    {{ profile_form.date_of_birth }}
+                    {% if profile_form.date_of_birth.errors %}
+                        <ul class="errorlist">
+                            {% for error in profile_form.date_of_birth.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <label class="form-label" for="id_address">
+                    Address
+                </label>
+                {{ profile_form.address }}
+                {% if profile_form.address.errors %}
+                    <ul class="errorlist">
+                        {% for error in profile_form.address.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-group full-width">
+                <label class="form-label" for="id_bio">
+                    Bio
+                </label>
+                {{ profile_form.bio }}
+                {% if profile_form.bio.errors %}
+                    <ul class="errorlist">
+                        {% for error in profile_form.bio.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                <small class="form-text">Tell us a little about yourself</small>
+            </div>
+        </div>
+
+        <!-- Profile Picture Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <span>📷</span>
+                <span>Profile Picture</span>
+            </h3>
+
+            <div class="form-group">
+                <label class="form-label" for="id_profile_picture">
+                    Upload New Picture
+                </label>
+                <div class="image-upload-wrapper">
+                    {% if user.profile.profile_picture %}
+                        <img src="{{ user.profile.profile_picture.url }}" alt="Profile" class="current-image">
+                    {% else %}
+                        <div class="current-avatar-placeholder">
+                            {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                        </div>
+                    {% endif %}
+                    <div class="file-input-wrapper">
+                        {{ profile_form.profile_picture }}
+                        {% if profile_form.profile_picture.errors %}
+                            <ul class="errorlist">
+                                {% for error in profile_form.profile_picture.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        <small class="form-text">Recommended: Square image, at least 400x400px</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <a href="{% url 'user:profile_details' %}" class="btn btn-secondary">
+                <span>✕</span>
+                <span>Cancel</span>
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <span>💾</span>
+                <span>Save Changes</span>
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+    // Add form-control class to all form inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputs = document.querySelectorAll('input:not([type="file"]), textarea, select');
+        inputs.forEach(input => {
+            input.classList.add('form-control');
+            if (input.hasAttribute('required')) {
+                const label = document.querySelector(`label[for="${input.id}"]`);
+                if (label && !label.querySelector('.required')) {
+                    label.innerHTML += ' <span class="required">*</span>';
+                }
+            }
+        });
+
+        // Add error class to inputs with errors
+        const errorLists = document.querySelectorAll('.errorlist');
+        errorLists.forEach(errorList => {
+            const input = errorList.previousElementSibling;
+            if (input && input.tagName !== 'LABEL') {
+                input.classList.add('error');
+            }
+        });
+
+        // File input styling
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            input.classList.add('file-input');
+        });
+    });
+</script>
+
+{% endblock %}
