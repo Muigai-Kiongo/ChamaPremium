@@ -128,7 +128,7 @@ STATICFILES_DIRS = [
 ]
 
 # WhiteNoise configuration for serving static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 
 # Media files
@@ -202,3 +202,10 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+# BUT, also add it outside the if statement for when DEBUG=True
+CSRF_TRUSTED_ORIGINS = [
+    'https://chamapremium.mkon.tech',
+    'http://chamapremium.mkon.tech',
+]
+    
