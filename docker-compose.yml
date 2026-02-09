@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  db:
+    image: postgres:15-alpine
+    container_name: chamapremium-db
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME:-chamapremium}
+      - POSTGRES_USER=${DB_USER:-chamapremium}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    networks:
+      - chamapremium-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-chamapremium}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching, sessions, channels, and celery
+  redis:
+    image: redis:7-alpine
+    container_name: chamapremium-redis
+    restart: unless-stopped
+    networks:
+      - chamapremium-internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ChamaPremium Django Application
+  chamapremium:
+    build: .
+    container_name: chamapremium
+    restart: unless-stopped
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - DATABASE_URL=postgresql://${DB_USER:-chamapremium}:${DB_PASSWORD}@db:5432/${DB_NAME:-chamapremium}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - chamapremium-internal
+      - traefik-public
+    labels:
+      # Enable Traefik for this container
+      - "traefik.enable=true"
+      
+      # Specify the network Traefik should use
+      - "traefik.docker.network=traefik-public"
+      
+      # Router configuration
+      - "traefik.http.routers.chamapremium.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.chamapremium.entrypoints=websecure"
+      - "traefik.http.routers.chamapremium.tls=true"
+      - "traefik.http.routers.chamapremium.tls.certresolver=myresolver"
+      
+      # Service configuration
+      - "traefik.http.services.chamapremium.loadbalancer.server.port=8000"
+      
+      # Security headers middleware
+      - "traefik.http.routers.chamapremium.middlewares=chamapremium-headers"
+      - "traefik.http.middlewares.chamapremium-headers.headers.sslredirect=true"
+      - "traefik.http.middlewares.chamapremium-headers.headers.stsincludesubdomains=true"
+      - "traefik.http.middlewares.chamapremium-headers.headers.stspreload=true"
+      - "traefik.http.middlewares.chamapremium-headers.headers.stsseconds=31536000"
+      - "traefik.http.middlewares.chamapremium-headers.headers.forcestsheader=true"
+      - "traefik.http.middlewares.chamapremium-headers.headers.framedeny=true"
+      - "traefik.http.middlewares.chamapremium-headers.headers.contenttypenosniff=true"
+      - "traefik.http.middlewares.chamapremium-headers.headers.browserxssfilter=true"
+
+  # Celery Worker for background tasks
+  celery:
+    build: .
+    container_name: chamapremium-celery
+    restart: unless-stopped
+    command: celery -A config worker -l info
+    volumes:
+      - media_volume:/app/media
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql://${DB_USER:-chamapremium}:${DB_PASSWORD}@db:5432/${DB_NAME:-chamapremium}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - chamapremium-internal
+
+  # Celery Beat for scheduled tasks (optional)
+  celery-beat:
+    build: .
+    container_name: chamapremium-celery-beat
+    restart: unless-stopped
+    command: celery -A config beat -l info
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql://${DB_USER:-chamapremium}:${DB_PASSWORD}@db:5432/${DB_NAME:-chamapremium}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - chamapremium-internal
+
+networks:
+  traefik-public:
+    external: true
+  chamapremium-internal:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
